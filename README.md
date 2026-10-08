@@ -41,7 +41,7 @@ BorderSight combines multiple verification checks into one workflow instead of r
 ## Technical Implementation
 
 ### Architecture
-![.](
+![.](https://github.com/Roahith/hacktoberfest-hack-day-coimbatore-x-init-club-and-idea-club/blob/main/artart.jpeg?raw=true)
 
 
 
