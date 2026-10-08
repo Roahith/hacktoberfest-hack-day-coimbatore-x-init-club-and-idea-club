@@ -1,7 +1,10 @@
 __pycache__/
-*.py[cod]
+*.pyc
 .venv/
 venv/
 .env
-.env.*
-!.env.example
+.env.example
+
+# Local test documents
+p2_document_engine/samples/test_passport_fixed.pdf
+p2_document_engine/samples/test_passport.pdf.pdf
