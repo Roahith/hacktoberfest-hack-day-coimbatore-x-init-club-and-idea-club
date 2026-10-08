@@ -1,85 +1,80 @@
 import json
 import os
-from typing import Any
 
-import requests
+from dotenv import load_dotenv
+from google import genai
+
+load_dotenv(".env")
+
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+MODEL = "gemma-4-26b-a4b-it"
 
 
-HF_API_URL = os.getenv("HF_API_URL")
-HF_TOKEN = os.getenv("HF_TOKEN")
+def analyze_screening(
+    risk_level: str,
+    risk_score: int,
+    reasons: list[str],
+) -> dict:
+    """Use Gemma 4 to explain the deterministic screening result."""
 
+    if not GEMINI_API_KEY:
+        raise RuntimeError("GEMINI_API_KEY is not configured")
 
-SYSTEM_PROMPT = """
-You are VeriLens AI, an explainable immigration pre-screening assistant.
+    client = genai.Client(api_key=GEMINI_API_KEY)
 
-You MUST reason only from the structured evidence supplied to you.
+    prompt = f"""You are VeriLens AI.
+Explain this screening result in 1 short sentence.
 
-Rules:
-- Do not invent criminal, security, immigration, or identity facts.
-- Do not claim access to INTERPOL or any real government database.
-- Security records are synthetic demonstration data.
-- The deterministic risk engine has already calculated the risk score.
-- Explain why the evidence supports the result.
-- The human immigration officer makes the final decision.
-- Never make a legal admission decision yourself.
+Risk: {risk_level}
+Score: {risk_score}
+Reasons: {json.dumps(reasons)}
 
-Return concise JSON with:
-{
-  "summary": "...",
-  "key_findings": ["..."],
-  "recommendation": "CLEAR or SECONDARY_REVIEW",
-  "confidence": "HIGH, MEDIUM, or LOW"
-}
+Return ONLY JSON:
+{{"summary":"short explanation","recommendation":"CLEAR or SECONDARY_REVIEW"}}
 """
 
+    response = client.models.generate_content(
+        model=MODEL,
+        contents=prompt,
+        config={
+            "temperature": 0.1,
+            "max_output_tokens": 80,
+        },
+    )
 
-def analyze_screening(evidence: dict[str, Any]) -> dict[str, Any]:
-    """Send structured screening evidence to the hosted Gemma model."""
+    text = (response.text or "").strip()
 
-    if not HF_API_URL or not HF_TOKEN:
+    if not text:
         return {
-            "summary": "Gemma cloud inference is not configured.",
-            "key_findings": [],
-            "recommendation": "SECONDARY_REVIEW",
-            "confidence": "LOW",
+            "summary": (
+                "Automated verification signals were evaluated "
+                "and the deterministic screening result was used."
+            ),
+            "recommendation": (
+                "CLEAR" if risk_level == "CLEAR"
+                else "SECONDARY_REVIEW"
+            ),
+            "model": MODEL,
+            "ai_status": "NO_TEXT_RESPONSE",
         }
 
-    prompt = (
-        SYSTEM_PROMPT
-        + "\n\nSCREENING EVIDENCE:\n"
-        + json.dumps(evidence, indent=2)
-        + "\n\nAnalyze this evidence."
-    )
+    if text.startswith("```"):
+        text = text.replace("```json", "", 1)
+        text = text.replace("```", "")
+        text = text.strip()
 
-    response = requests.post(
-        HF_API_URL,
-        headers={
-            "Authorization": f"Bearer {HF_TOKEN}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "inputs": prompt,
-            "parameters": {
-                "max_new_tokens": 400,
-                "temperature": 0.1,
-                "return_full_text": False,
-            },
-        },
-        timeout=60,
-    )
+    try:
+        result = json.loads(text)
+    except json.JSONDecodeError:
+        result = {
+            "summary": text,
+            "recommendation": (
+                "CLEAR" if risk_level == "CLEAR"
+                else "SECONDARY_REVIEW"
+            ),
+        }
 
-    response.raise_for_status()
+    result["model"] = MODEL
+    result["ai_status"] = "OK"
 
-    result = response.json()
-
-    if isinstance(result, list) and result:
-        generated = result[0].get("generated_text", "")
-    elif isinstance(result, dict):
-        generated = result.get("generated_text", "")
-    else:
-        generated = str(result)
-
-    return {
-        "raw_response": generated,
-        "model": "Gemma 4",
-    }
+    return result
