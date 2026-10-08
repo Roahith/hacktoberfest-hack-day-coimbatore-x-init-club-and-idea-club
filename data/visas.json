@@ -1,0 +1,38 @@
+[
+  {
+    "visa_id": "DEMO-V-2001",
+    "passport_number": "DEMO-P-1001",
+    "visa_type": "TOURIST",
+    "country": "USA",
+    "issue_date": "2026-01-10",
+    "expiry_date": "2026-12-31",
+    "status": "ACTIVE"
+  },
+  {
+    "visa_id": "DEMO-V-2002",
+    "passport_number": "DEMO-P-1002",
+    "visa_type": "TOURIST",
+    "country": "UK",
+    "issue_date": "2025-01-01",
+    "expiry_date": "2025-12-31",
+    "status": "EXPIRED"
+  },
+  {
+    "visa_id": "DEMO-V-2003",
+    "passport_number": "DEMO-P-1003",
+    "visa_type": "TOURIST",
+    "country": "INDIA",
+    "issue_date": "2026-02-01",
+    "expiry_date": "2026-12-31",
+    "status": "ACTIVE"
+  },
+  {
+    "visa_id": "DEMO-V-2004",
+    "passport_number": "DEMO-P-9999",
+    "visa_type": "TOURIST",
+    "country": "USA",
+    "issue_date": "2026-01-10",
+    "expiry_date": "2026-12-31",
+    "status": "ACTIVE"
+  }
+]
