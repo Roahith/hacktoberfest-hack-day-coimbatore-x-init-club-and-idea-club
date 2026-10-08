@@ -1,4 +1,3 @@
-import json
 import os
 
 from dotenv import load_dotenv
@@ -22,59 +21,84 @@ def analyze_screening(
 
     client = genai.Client(api_key=GEMINI_API_KEY)
 
-    prompt = f"""You are VeriLens AI.
-Explain this screening result in 1 short sentence.
+    reasons_text = (
+        "; ".join(reasons)
+        if reasons
+        else "No verification issues were detected."
+    )
 
-Risk: {risk_level}
-Score: {risk_score}
-Reasons: {json.dumps(reasons)}
+    prompt = f"""You are the explanation assistant for VeriLens AI.
 
-Return ONLY JSON:
-{{"summary":"short explanation","recommendation":"CLEAR or SECONDARY_REVIEW"}}
-"""
+Explain this screening result in ONE short sentence.
+
+Risk level: {risk_level}
+Risk score: {risk_score}
+Verification findings: {reasons_text}
+
+Do not make a criminality determination.
+Do not make an immigration decision.
+Do not invent facts.
+Only explain the verification findings.
+Return only the final explanation sentence."""
 
     response = client.models.generate_content(
         model=MODEL,
         contents=prompt,
         config={
             "temperature": 0.1,
-            "max_output_tokens": 80,
+            "max_output_tokens": 1024,
         },
     )
 
-    text = (response.text or "").strip()
+    # Gemma 4 may return separate thinking and final-answer parts.
+    # We explicitly select the non-thinking part.
+    final_text = None
 
-    if not text:
+    if response.candidates:
+        for candidate in response.candidates:
+            if not candidate.content:
+                continue
+
+            for part in candidate.content.parts:
+                if getattr(part, "thought", False):
+                    continue
+
+                if part.text and part.text.strip():
+                    final_text = part.text.strip()
+                    break
+
+            if final_text:
+                break
+
+    # Fallback to SDK-provided text if available.
+    if not final_text:
+        final_text = (response.text or "").strip()
+
+    if not final_text:
         return {
             "summary": (
                 "Automated verification signals were evaluated "
                 "and the deterministic screening result was used."
             ),
             "recommendation": (
-                "CLEAR" if risk_level == "CLEAR"
+                "CLEAR"
+                if risk_level == "CLEAR"
                 else "SECONDARY_REVIEW"
             ),
             "model": MODEL,
             "ai_status": "NO_TEXT_RESPONSE",
         }
 
-    if text.startswith("```"):
-        text = text.replace("```json", "", 1)
-        text = text.replace("```", "")
-        text = text.strip()
+    # Remove accidental markdown code fences.
+    final_text = final_text.replace("```", "").strip()
 
-    try:
-        result = json.loads(text)
-    except json.JSONDecodeError:
-        result = {
-            "summary": text,
-            "recommendation": (
-                "CLEAR" if risk_level == "CLEAR"
-                else "SECONDARY_REVIEW"
-            ),
-        }
-
-    result["model"] = MODEL
-    result["ai_status"] = "OK"
-
-    return result
+    return {
+        "summary": final_text,
+        "recommendation": (
+            "CLEAR"
+            if risk_level == "CLEAR"
+            else "SECONDARY_REVIEW"
+        ),
+        "model": MODEL,
+        "ai_status": "OK",
+    }

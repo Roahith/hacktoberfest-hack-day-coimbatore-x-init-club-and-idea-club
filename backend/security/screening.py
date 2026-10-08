@@ -38,7 +38,7 @@ def screen_security(passport_details):
 
     passport_number = passport_details.get("passport_number")
     name = passport_details.get("name")
-    dob = passport_details.get("dob")
+    dob = passport_details.get("date_of_birth") or passport_details.get("dob")
 
     for record in records:
 

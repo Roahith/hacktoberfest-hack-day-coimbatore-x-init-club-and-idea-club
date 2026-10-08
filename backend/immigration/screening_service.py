@@ -86,16 +86,36 @@ def run_immigration_screening(traveler: Dict[str, Any]) -> Dict[str, Any]:
     # 2. VISA VERIFICATION
     # ---------------------------------------------------------
 
-    # If passport does not exist in our synthetic database,
-    # visa verification should not be trusted.
-    if passport_found:
-        visa_result = verify_visa(traveler)
+    # Prototype rule:
+    # Indian citizens do not require an Indian visa.
+    normalized_nationality = str(
+        traveler.get("nationality") or ""
+    ).strip().upper()
+
+    visa_required = normalized_nationality not in {
+        "INDIA",
+        "INDIAN",
+        "IND",
+        "IN",
+    }
+
+    if not visa_required:
+        visa_result = {
+            "visa_required": False,
+            "visa_valid": True,
+            "visa_passport_match": True,
+            "reason": None,
+        }
+
+    elif passport_found:
+        visa_result = verify_visa(passport_number)
+
     else:
         visa_result = {
             "visa_required": True,
             "visa_valid": False,
             "visa_passport_match": False,
-            "reason": "Passport not found, visa verification skipped"
+            "reason": "Passport not found, visa verification skipped",
         }
 
     visa_required = visa_result.get(

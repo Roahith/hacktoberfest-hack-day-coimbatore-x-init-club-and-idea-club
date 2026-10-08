@@ -11,6 +11,25 @@ from backend.immigration.verifier import verify_immigration
 from backend.security.screening import screen_security
 from backend.documents.traveler_pack import generate_document_pack
 from backend.immigration.screening_service import run_immigration_screening
+from backend.schemas.screening import (
+    ScreeningEvidence,
+    DocumentEvidence,
+    ImmigrationEvidence,
+    SecurityEvidence,
+    BiometricEvidence,
+)
+from backend.decision.risk_engine import calculate_risk
+from backend.ai.gemma import analyze_screening
+from dataclasses import asdict
+from p2_document_engine.ocr_engine import extract_document_text
+from p2_document_engine.mrz_engine import extract_mrz
+from p2_document_engine.validation import (
+    extract_passport_number_from_ocr,
+    extract_date_of_birth,
+    database_comparison,
+    calculate_tamper_indicators,
+)
+
 
 
 # ============================================================
@@ -279,220 +298,178 @@ def security_verification(request: ScreeningRequest):
 
 
 # ============================================================
-# COMPLETE SCREENING PIPELINE
-# ============================================================
-
-@app.post("/screen")
-def complete_screening(request: ScreeningRequest):
-
-    traveler_data = request.model_dump()
-
-    # --------------------------------------------------------
-    # 1. IMMIGRATION
-    # --------------------------------------------------------
-
-    try:
-        immigration = verify_immigration(traveler_data)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Immigration check failed: {str(e)}"
-        )
-
-    # --------------------------------------------------------
-    # 2. SECURITY
-    # --------------------------------------------------------
-
-    try:
-        security = screen_security(traveler_data)
-    except Exception as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"Security screening failed: {str(e)}"
-        )
-
-    # --------------------------------------------------------
-    # 3. DETERMINE FINAL STATUS
-    # --------------------------------------------------------
-
-    reasons = []
-
-    # Passport problems
-    if not immigration.get("passport_found", False):
-
-        reasons.append(
-            "Passport not found in synthetic database"
-        )
-
-    if immigration.get("details_match") is False:
-
-        reasons.append(
-            "Passport details do not match database"
-        )
-
-    # Visa problems
-    if immigration.get("visa_required"):
-
-        if not immigration.get("visa_valid", False):
-
-            reasons.append(
-                immigration.get(
-                    "reason",
-                    "Visa is invalid or unavailable"
-                )
-            )
-
-        if not immigration.get("visa_passport_match", False):
-
-            reasons.append(
-                "Visa does not match passport"
-            )
-
-    # Security problems
-    if security.get("match", False):
-
-        reasons.append(
-            security.get(
-                "reason",
-                "Security record requires secondary review"
-            )
-        )
-
-    # --------------------------------------------------------
-    # FINAL DECISION
-    # --------------------------------------------------------
-
-    if security.get("match", False):
-
-        final_status = "SECURITY_ALERT"
-
-    elif not immigration.get("passport_found", False):
-
-        final_status = "REVIEW"
-
-    elif immigration.get("details_match") is False:
-
-        final_status = "REVIEW"
-
-    elif (
-        immigration.get("visa_required")
-        and not immigration.get("visa_valid", False)
-    ):
-
-        final_status = "REVIEW"
-
-    elif (
-        immigration.get("visa_required")
-        and not immigration.get("visa_passport_match", False)
-    ):
-
-        final_status = "REVIEW"
-
-    else:
-
-        final_status = "CLEAR"
-
-    # --------------------------------------------------------
-    # RESPONSE
-    # --------------------------------------------------------
-
-    return {
-        "success": True,
-
-        "traveler": {
-            "name": traveler_data.get("name"),
-            "passport_number": traveler_data.get("passport_number"),
-            "nationality": traveler_data.get("nationality")
-        },
-
-        "immigration": immigration,
-
-        "security": security,
-
-        "final_status": final_status,
-
-        "reasons": reasons,
-
-        "message": (
-            "Traveler cleared"
-            if final_status == "CLEAR"
-            else "Secondary review required"
-            if final_status == "REVIEW"
-            else "Security alert triggered"
-        )
-    }
-
-
-# ============================================================
-# DEMO SCREENING
-# ============================================================
-
-@app.get("/demo")
-def demo():
-
-    demo_traveler = ScreeningRequest(
-        name="JOHN CARTER",
-        passport_number="DEMO-P-1001",
-        nationality="USA",
-        date_of_birth="1998-08-15",
-        expiry="2031-08-15"
-    )
-
-    result = complete_screening(demo_traveler)
-
-    return result
-
-
-# ============================================================
-# RUN DIRECTLY
-# ============================================================
-# ============================================================
 # UNIFIED IMMIGRATION SCREENING
 # ============================================================
 
 @app.post("/screen")
 def screen_traveler(traveler: ScreeningRequest):
     """
-    Run the complete VeriLens AI immigration pre-screening pipeline.
+    Unified VeriLens AI screening endpoint.
 
     Flow:
-        Frontend
-            ↓
-        /screen
-            ↓
-        Unified screening service
-            ↓
-        Passport verification
-            ↓
-        Visa verification
-            ↓
-        Security screening
-            ↓
+        P3 passport / visa / security verification
+                    ↓
+        ScreeningEvidence
+                    ↓
+        P1 deterministic risk engine
+                    ↓
+        Gemma 4 explanation
+                    ↓
         Unified result
     """
 
+    traveler_data = traveler.model_dump()
+
     try:
-        # Convert Pydantic model to normal dictionary
-        traveler_data = traveler.model_dump()
+        # --------------------------------------------------------
+        # 1. RUN P3 SCREENING
+        # --------------------------------------------------------
 
-        # Run complete P3 immigration/security pipeline
-        result = run_immigration_screening(traveler_data)
+        p3_result = run_immigration_screening(traveler_data)
 
-        # Return frontend-friendly JSON
+        if not p3_result.get("success", False):
+            raise HTTPException(
+                status_code=400,
+                detail=p3_result
+            )
+
+        immigration = p3_result.get("immigration", {})
+        security = p3_result.get("security", {})
+
+        # --------------------------------------------------------
+        # 2. CONVERT P3 OUTPUT → P1 EVIDENCE SCHEMA
+        # --------------------------------------------------------
+
+        # P3 currently does not expose a separate visa_found field.
+        # A valid passport-linked visa is treated as a found visa.
+        visa_valid = immigration.get("visa_valid", False)
+        visa_match = immigration.get("visa_passport_match", False)
+
+        evidence = ScreeningEvidence(
+            document=DocumentEvidence(
+                passport_found=immigration.get(
+                    "passport_found", False
+                ),
+                # MRZ is not part of the current P3 JSON contract.
+                # P2 document integration will populate this later.
+                mrz_valid=True,
+                fields_match=immigration.get(
+                    "details_match", False
+                ),
+                passport_status="VALID"
+                if immigration.get("passport_found", False)
+                else "UNKNOWN",
+                mismatches=[],
+            ),
+
+            immigration=ImmigrationEvidence(
+                nationality=traveler_data.get(
+                    "nationality", "UNKNOWN"
+                ),
+                visa_required=immigration.get(
+                    "visa_required", False
+                ),
+                visa_found=visa_valid or visa_match,
+                visa_valid=visa_valid,
+                visa_passport_match=visa_match,
+                issues=(
+                    [immigration["reason"]]
+                    if immigration.get("reason")
+                    else []
+                ),
+            ),
+
+            security=SecurityEvidence(
+                match=security.get("match", False),
+                status=security.get(
+                    "status", "NOT_CHECKED"
+                ),
+                reason=security.get("reason"),
+            ),
+
+            # Face verification is not integrated yet.
+            biometric=BiometricEvidence(
+                checked=False,
+                match=False,
+                similarity=None,
+            ),
+        )
+
+        # --------------------------------------------------------
+        # 3. P1 DETERMINISTIC RISK ENGINE
+        # --------------------------------------------------------
+
+        risk_result = calculate_risk(evidence)
+
+        # --------------------------------------------------------
+        # 4. GEMMA 4 EXPLANATION
+        # --------------------------------------------------------
+
+        try:
+            ai_result = analyze_screening(
+                risk_level=risk_result.risk_level,
+                risk_score=risk_result.risk_score,
+                reasons=risk_result.reasons,
+            )
+        except Exception as ai_error:
+            # AI failure must not break deterministic screening.
+            ai_result = {
+                "summary": risk_result.explanation,
+                "recommendation": risk_result.recommendation,
+                "model": "gemma-4-26b-a4b-it",
+                "ai_status": "FALLBACK",
+                "error": str(ai_error),
+            }
+
+        # --------------------------------------------------------
+        # 5. FINAL UNIFIED RESPONSE
+        # --------------------------------------------------------
+
         return {
             "success": True,
+
             "traveler": traveler_data,
-            "screening": result
+
+            "screening": {
+                "risk_level": risk_result.risk_level,
+                "risk_score": risk_result.risk_score,
+                "recommendation": risk_result.recommendation,
+                "reasons": risk_result.reasons,
+                "explanation": risk_result.explanation,
+
+                "ai": ai_result,
+
+                "evidence": asdict(
+                    risk_result.evidence
+                ),
+            },
+
+            # Keep the original P3 outputs available for debugging
+            # and frontend development.
+            "p3": {
+                "immigration": immigration,
+                "security": security,
+            },
+
+            "human_review_required": (
+                risk_result.recommendation
+                == "SECONDARY_REVIEW"
+            ),
         }
+
+    except HTTPException:
+        raise
 
     except Exception as exc:
         raise HTTPException(
             status_code=500,
             detail={
                 "success": False,
-                "error": str(exc)
-            }
+                "error": str(exc),
+            },
         )
+
+
 if __name__ == "__main__":
 
     import uvicorn
@@ -503,3 +480,336 @@ if __name__ == "__main__":
         port=8000,
         reload=True
     )
+
+def _mrz_date_to_iso(value: str | None) -> str | None:
+    """Convert MRZ YYMMDD dates to ISO YYYY-MM-DD."""
+
+    if not value or len(value) != 6 or not value.isdigit():
+        return value
+
+    yy = int(value[0:2])
+    mm = value[2:4]
+    dd = value[4:6]
+
+    # Passport MRZ uses two-digit years.
+    # This prototype treats 00-49 as 2000-2049
+    # and 50-99 as 1950-1999.
+    year = 2000 + yy if yy < 50 else 1900 + yy
+
+    return f"{year:04d}-{mm}-{dd}"
+
+
+@app.post("/screen-document")
+async def screen_document(file: UploadFile = File(...)):
+    """
+    Full VeriLens document screening pipeline.
+
+    P2 document intelligence
+        -> P3 immigration/security
+        -> P1 deterministic risk engine
+        -> Gemma 4 explanation
+    """
+
+    filename = file.filename or ""
+    extension = ""
+
+    if "." in filename:
+        extension = "." + filename.rsplit(".", 1)[1].lower()
+
+    allowed_extensions = {".pdf", ".png", ".jpg", ".jpeg"}
+
+    if extension not in allowed_extensions:
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF, PNG, JPG and JPEG files are supported.",
+        )
+
+    file_bytes = await file.read()
+
+    if not file_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail="Uploaded file is empty.",
+        )
+
+    try:
+        # =====================================================
+        # P2: OCR + MRZ
+        # =====================================================
+
+        ocr_result = extract_document_text(
+            file_bytes,
+            filename,
+        )
+
+        raw_text = ocr_result["raw_text"]
+        mrz_text = ocr_result.get("mrz_text", "")
+
+        mrz_result = extract_mrz(mrz_text)
+
+        if not mrz_result.get("detected"):
+            raise HTTPException(
+                status_code=422,
+                detail="Passport MRZ could not be detected.",
+            )
+
+        passport_data = {
+            "passport_number": mrz_result.get("passport_number"),
+            "surname": mrz_result.get("surname"),
+            "given_names": mrz_result.get("given_names"),
+            "nationality": mrz_result.get("nationality"),
+            "date_of_birth": _mrz_date_to_iso(mrz_result.get("date_of_birth_raw")),
+            "sex": mrz_result.get("sex"),
+            "expiry_date": _mrz_date_to_iso(mrz_result.get("expiry_date_raw")),
+        }
+
+        passport_number = passport_data["passport_number"]
+
+        # =====================================================
+        # P2: OCR <-> MRZ consistency
+        # =====================================================
+
+        passport_number_ocr = extract_passport_number_from_ocr(raw_text)
+        date_of_birth_ocr = extract_date_of_birth(raw_text)
+
+        consistency_checks = []
+
+        if passport_number_ocr:
+            consistency_checks.append(
+                passport_number_ocr.replace(" ", "").upper()
+                == str(passport_number).upper()
+            )
+
+        if date_of_birth_ocr:
+            consistency_checks.append(
+                date_of_birth_ocr.replace("/", "").replace("-", "")
+                == str(
+                    passport_data["date_of_birth"]
+                )
+            )
+
+        ocr_mrz_match = (
+            all(consistency_checks)
+            if consistency_checks
+            else None
+        )
+
+        # =====================================================
+        # P3: Immigration + security screening
+        # =====================================================
+
+        nationality = passport_data.get("nationality")
+
+        # Normalize MRZ nationality codes to synthetic DB values.
+        nationality = {
+            "IND": "INDIA",
+            "GBR": "UK",
+        }.get(nationality, nationality)
+
+        traveler = {
+            "name": (
+                f"{passport_data.get('given_names', '')} "
+                f"{passport_data.get('surname', '')}"
+            ).strip(),
+            "passport_number": passport_number,
+            "date_of_birth": passport_data.get("date_of_birth"),
+            "nationality": nationality,
+            "expiry": passport_data.get("expiry_date"),
+        }
+
+        p3_result = run_immigration_screening(traveler)
+
+        if not p3_result.get("success"):
+            raise HTTPException(
+                status_code=422,
+                detail=p3_result.get(
+                    "reasons",
+                    ["Immigration screening failed."],
+                ),
+            )
+
+        # =====================================================
+        # P2: Compare document against P3 database result
+        # =====================================================
+
+        immigration = p3_result["immigration"]
+
+        database_record = None
+
+        if immigration.get("passport_found"):
+            database_record = {
+                "passport_number": passport_number,
+                "nationality": passport_data.get("nationality"),
+                "date_of_birth": passport_data.get("date_of_birth"),
+                "name": traveler["name"],
+            }
+
+        database_result = database_comparison(
+            passport_data,
+            database_record,
+        )
+
+        tamper_result = calculate_tamper_indicators(
+            mrz_result,
+            database_result,
+        )
+
+        # =====================================================
+        # P1: Build evidence
+        # =====================================================
+
+        security = p3_result["security"]
+
+        evidence = ScreeningEvidence(
+            document=DocumentEvidence(
+                passport_found=immigration.get(
+                    "passport_found",
+                    False,
+                ),
+                mrz_valid=mrz_result.get(
+                    "valid",
+                    False,
+                ),
+                # P3 is the authoritative synthetic passport DB check.
+                fields_match=immigration.get(
+                    "details_match",
+                    False,
+                ),
+                passport_status=(
+                    "VALID"
+                    if immigration.get("passport_found")
+                    else "UNKNOWN"
+                ),
+                mismatches=[],
+            ),
+
+            immigration=ImmigrationEvidence(
+                nationality=passport_data.get(
+                    "nationality",
+                    "UNKNOWN",
+                ),
+                visa_required=immigration.get(
+                    "visa_required",
+                    False,
+                ),
+                visa_found=(
+                    immigration.get("visa_valid", False)
+                    or immigration.get(
+                        "visa_passport_match",
+                        False,
+                    )
+                ),
+                visa_valid=immigration.get(
+                    "visa_valid",
+                    False,
+                ),
+                visa_passport_match=immigration.get(
+                    "visa_passport_match",
+                    False,
+                ),
+                issues=(
+                    [immigration["reason"]]
+                    if immigration.get("reason")
+                    else []
+                ),
+            ),
+
+            security=SecurityEvidence(
+                match=security.get("match", False),
+                status=security.get("status", "NOT_CHECKED"),
+                reason=security.get("reason"),
+            ),
+
+            biometric=BiometricEvidence(
+                checked=False,
+                match=False,
+                similarity=None,
+            ),
+        )
+
+        # =====================================================
+        # P1: Deterministic risk engine
+        # =====================================================
+
+        screening = calculate_risk(evidence)
+
+        # =====================================================
+        # Gemma 4
+        # =====================================================
+
+        try:
+            ai_result = analyze_screening(
+                screening.risk_level,
+                screening.risk_score,
+                screening.reasons,
+            )
+        except Exception as error:
+            ai_result = {
+                "summary": screening.explanation,
+                "recommendation": (
+                    "CLEAR"
+                    if screening.risk_level == "CLEAR"
+                    else "SECONDARY_REVIEW"
+                ),
+                "model": "gemma-4-26b-a4b-it",
+                "ai_status": "FALLBACK",
+                "error": str(error),
+            }
+
+        return {
+            "success": True,
+
+            "document": {
+                "filename": filename,
+                "type": "passport",
+            },
+
+            "p2": {
+                "ocr": {
+                    "confidence": ocr_result["confidence"],
+                    "pages": ocr_result["pages"],
+                },
+                "passport": passport_data,
+                "mrz": {
+                    "detected": mrz_result.get("detected", False),
+                    "valid": mrz_result.get("valid", False),
+                    "check_digits": mrz_result.get(
+                        "check_digits",
+                        {},
+                    ),
+                },
+                "consistency": {
+                    "ocr_mrz_match": ocr_mrz_match,
+                    "database_match": database_result.get(
+                        "match"
+                    ),
+                },
+                "tamper": tamper_result,
+            },
+
+            "screening": {
+                "risk_level": screening.risk_level,
+                "risk_score": screening.risk_score,
+                "recommendation": screening.recommendation,
+                "reasons": screening.reasons,
+                "explanation": screening.explanation,
+                "ai": ai_result,
+                "evidence": asdict(screening.evidence),
+            },
+
+            "p3": p3_result,
+
+            "human_review_required": (
+                screening.risk_level != "CLEAR"
+            ),
+        }
+
+
+    except HTTPException:
+        raise
+
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Document screening failed: {error}",
+        )

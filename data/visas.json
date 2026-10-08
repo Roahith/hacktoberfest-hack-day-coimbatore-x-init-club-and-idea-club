@@ -1,7 +1,7 @@
 [
   {
     "visa_id": "DEMO-V-2001",
-    "passport_number": "DEMO-P-1001",
+    "passport_number": "D10010001",
     "visa_type": "TOURIST",
     "country": "USA",
     "issue_date": "2026-01-10",
@@ -10,7 +10,7 @@
   },
   {
     "visa_id": "DEMO-V-2002",
-    "passport_number": "DEMO-P-1002",
+    "passport_number": "D10010002",
     "visa_type": "TOURIST",
     "country": "UK",
     "issue_date": "2025-01-01",
@@ -19,7 +19,7 @@
   },
   {
     "visa_id": "DEMO-V-2003",
-    "passport_number": "DEMO-P-1003",
+    "passport_number": "D10010003",
     "visa_type": "TOURIST",
     "country": "INDIA",
     "issue_date": "2026-02-01",
@@ -28,7 +28,7 @@
   },
   {
     "visa_id": "DEMO-V-2004",
-    "passport_number": "DEMO-P-9999",
+    "passport_number": "D99999999",
     "visa_type": "TOURIST",
     "country": "USA",
     "issue_date": "2026-01-10",
