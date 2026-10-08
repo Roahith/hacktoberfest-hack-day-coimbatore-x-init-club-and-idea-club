@@ -1,10 +1,10 @@
 # BorderSight
 
-> [One-line description of the project and what it does.]
+> BorderSight helps immigration officers quickly verify a traveler’s passport, visa, identity, and security information, highlighting anything that may need a closer look.
 
 ## Team
 
-**Team Name:** [Team Name]
+**Team Name:** [TetraByte]
 
 
 | Member | Contribution   |
