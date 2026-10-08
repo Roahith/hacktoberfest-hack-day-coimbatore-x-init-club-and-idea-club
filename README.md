@@ -63,22 +63,25 @@ If a category or technology is not implemented in the project, specify `N/A` ins
 
 ### How It Works
 
-[Explain the major components of the system and how they interact.]
+BorderSight consists of a web frontend and FastAPI backend. The backend handles passport, visa, security, and identity checks, combines the results into evidence, and produces a final screening result for the officer.
 
 ### Technical Decisions
 
-[Explain important architectural, algorithmic, or engineering decisions made during development.]
-
+Modular backend: Passport, visa, security, document, and AI checks are kept as separate modules so they can be tested and changed independently.
+Evidence-based decisions: Screening results are combined into a single risk result instead of letting the AI make the decision on its own.
+Synthetic data: We used demo databases and documents to safely demonstrate the workflow without relying on real government or security records.
+Human-in-the-loop: BorderSight flags cases for officer review rather than automatically making immigration decisions.
+Simple architecture: JSON-based storage and FastAPI were chosen to keep the prototype fast to build, test, and deploy during the hackathon.
 ## Implementation During the Hackathon
 
-[Describe what the team built during the Hack Day and the major functionality or components completed during the event.]
+During the Hack Day, we built the main BorderSight workflow from scratch. We added passport and visa checks, security screening, face verification, demo documents and databases, the FastAPI backend, and the officer dashboard.
 
 ### Team Contributions
 
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
+- **Roahith P:** AI, risk scoring, and decision logic
+- **Gaurav T:** Passport OCR, MRZ, and document verification
+- **Sharvesh J B:** Frontend dashboard and screening interface
+- **Akhilesh Aravind J:** Backend, immigration/security checks, and demo documents
 
 ## Working Application
 
