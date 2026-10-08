@@ -19,7 +19,7 @@
 
 ### The Problem
 
-[Describe the problem being addressed, who is affected by it, and the context in which it occurs.]
+Immigration officers often rely on multiple manual checks to verify passports, visas, identities, and security information, making screening slower and increasing the chance of missed inconsistencies.
 
 ### Why We Chose This Problem
 
