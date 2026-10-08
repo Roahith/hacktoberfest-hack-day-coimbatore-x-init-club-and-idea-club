@@ -10,6 +10,7 @@ import uuid
 from backend.immigration.verifier import verify_immigration
 from backend.security.screening import screen_security
 from backend.documents.traveler_pack import generate_document_pack
+from backend.immigration.screening_service import run_immigration_screening
 
 
 # ============================================================
@@ -445,7 +446,53 @@ def demo():
 # ============================================================
 # RUN DIRECTLY
 # ============================================================
+# ============================================================
+# UNIFIED IMMIGRATION SCREENING
+# ============================================================
 
+@app.post("/screen")
+def screen_traveler(traveler: ScreeningRequest):
+    """
+    Run the complete VeriLens AI immigration pre-screening pipeline.
+
+    Flow:
+        Frontend
+            ↓
+        /screen
+            ↓
+        Unified screening service
+            ↓
+        Passport verification
+            ↓
+        Visa verification
+            ↓
+        Security screening
+            ↓
+        Unified result
+    """
+
+    try:
+        # Convert Pydantic model to normal dictionary
+        traveler_data = traveler.model_dump()
+
+        # Run complete P3 immigration/security pipeline
+        result = run_immigration_screening(traveler_data)
+
+        # Return frontend-friendly JSON
+        return {
+            "success": True,
+            "traveler": traveler_data,
+            "screening": result
+        }
+
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "success": False,
+                "error": str(exc)
+            }
+        )
 if __name__ == "__main__":
 
     import uvicorn
