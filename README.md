@@ -84,7 +84,7 @@ During the Hack Day, we built the main BorderSight workflow from scratch. We add
 
 ## Working Application
 
-**Live Application:** [Live URL]
+Live Application : https://youtu.be/6l7iYI7Cg4s
 
 [Briefly explain how the deployed application can be accessed and what functionality can be tested.]
 
@@ -92,7 +92,7 @@ The submitted application should be functional and accessible through the provid
 
 ## Demo Video
 
-**Demo Video:** [Video URL]
+Demo Video: https://youtu.be/6l7iYI7Cg4s
 
 [Provide a short demonstration of the working project, covering the main user flow and important functionality.]
 
