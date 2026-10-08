@@ -1,4 +1,9 @@
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import (
+    FastAPI,
+    File,
+    UploadFile,
+    HTTPException
+)
 
 from p2_document_engine.ocr_engine import (
     extract_document_text
@@ -50,13 +55,19 @@ async def analyze_document(
     extension = ""
 
     if "." in filename:
-        extension = "." + filename.rsplit(".", 1)[1].lower()
+        extension = "." + filename.rsplit(
+            ".",
+            1
+        )[1].lower()
 
     if extension not in ALLOWED_EXTENSIONS:
 
         raise HTTPException(
             status_code=400,
-            detail="Only PDF, PNG, JPG and JPEG files are supported."
+            detail=(
+                "Only PDF, PNG, JPG and JPEG "
+                "files are supported."
+            )
         )
 
     file_bytes = await file.read()
@@ -79,14 +90,25 @@ async def analyze_document(
             filename
         )
 
-        raw_text = ocr_result["raw_text"]
+        raw_text = ocr_result[
+            "raw_text"
+        ]
+
+        dedicated_mrz_text = (
+            ocr_result.get(
+                "mrz_text",
+                ""
+            )
+        )
 
         # -------------------------
         # STEP 2: MRZ
         # -------------------------
 
+        # Use the dedicated MRZ OCR result
+        # instead of the normal OCR text.
         mrz_result = extract_mrz(
-            raw_text
+            dedicated_mrz_text
         )
 
         # -------------------------
@@ -110,26 +132,40 @@ async def analyze_document(
         if mrz_result.get("detected"):
 
             passport_data = {
-                "passport_number": mrz_result.get(
-                    "passport_number"
+                "passport_number": (
+                    mrz_result.get(
+                        "passport_number"
+                    )
                 ),
-                "surname": mrz_result.get(
-                    "surname"
+                "surname": (
+                    mrz_result.get(
+                        "surname"
+                    )
                 ),
-                "given_names": mrz_result.get(
-                    "given_names"
+                "given_names": (
+                    mrz_result.get(
+                        "given_names"
+                    )
                 ),
-                "nationality": mrz_result.get(
-                    "nationality"
+                "nationality": (
+                    mrz_result.get(
+                        "nationality"
+                    )
                 ),
-                "date_of_birth": mrz_result.get(
-                    "date_of_birth_raw"
+                "date_of_birth": (
+                    mrz_result.get(
+                        "date_of_birth_raw"
+                    )
                 ),
-                "sex": mrz_result.get(
-                    "sex"
+                "sex": (
+                    mrz_result.get(
+                        "sex"
+                    )
                 ),
-                "expiry_date": mrz_result.get(
-                    "expiry_date_raw"
+                "expiry_date": (
+                    mrz_result.get(
+                        "expiry_date_raw"
+                    )
                 )
             }
 
@@ -146,10 +182,9 @@ async def analyze_document(
             if passport_number_ocr:
 
                 matches.append(
-                    passport_number_ocr.replace(
-                        " ",
-                        ""
-                    ).upper()
+                    passport_number_ocr
+                    .replace(" ", "")
+                    .upper()
                     ==
                     str(
                         mrz_result.get(
@@ -162,13 +197,9 @@ async def analyze_document(
             if date_of_birth_ocr:
 
                 matches.append(
-                    date_of_birth_ocr.replace(
-                        "/",
-                        ""
-                    ).replace(
-                        "-",
-                        ""
-                    )
+                    date_of_birth_ocr
+                    .replace("/", "")
+                    .replace("-", "")
                     ==
                     str(
                         mrz_result.get(
@@ -180,27 +211,34 @@ async def analyze_document(
 
             if matches:
 
-                ocr_mrz_match = all(matches)
+                ocr_mrz_match = all(
+                    matches
+                )
 
         # -------------------------
         # STEP 5: Database
         # -------------------------
 
-        # P3 will connect the synthetic database here.
+        # P3 will connect the synthetic
+        # database here.
         database_record = None
 
-        database_result = database_comparison(
-            passport_data,
-            database_record
+        database_result = (
+            database_comparison(
+                passport_data,
+                database_record
+            )
         )
 
         # -------------------------
         # STEP 6: Tamper evidence
         # -------------------------
 
-        tamper_result = calculate_tamper_indicators(
-            mrz_result,
-            database_result
+        tamper_result = (
+            calculate_tamper_indicators(
+                mrz_result,
+                database_result
+            )
         )
 
         # -------------------------
@@ -213,39 +251,62 @@ async def analyze_document(
                 "filename": filename,
                 "type": (
                     "passport"
-                    if mrz_result.get("detected")
+                    if mrz_result.get(
+                        "detected"
+                    )
                     else "unknown"
                 )
             },
 
             "ocr": {
                 "status": "success",
-                "confidence": ocr_result["confidence"],
-                "pages": ocr_result["pages"],
-                "raw_text": raw_text
+                "confidence": (
+                    ocr_result[
+                        "confidence"
+                    ]
+                ),
+                "pages": (
+                    ocr_result[
+                        "pages"
+                    ]
+                ),
+                "raw_text": raw_text,
+                "mrz_text": (
+                    dedicated_mrz_text
+                )
             },
 
             "passport": passport_data,
 
             "mrz": {
-                "detected": mrz_result.get(
-                    "detected",
-                    False
+                "detected": (
+                    mrz_result.get(
+                        "detected",
+                        False
+                    )
                 ),
-                "valid": mrz_result.get(
-                    "valid",
-                    False
+                "valid": (
+                    mrz_result.get(
+                        "valid",
+                        False
+                    )
                 ),
-                "check_digits": mrz_result.get(
-                    "check_digits",
-                    {}
+                "check_digits": (
+                    mrz_result.get(
+                        "check_digits",
+                        {}
+                    )
                 )
             },
 
             "consistency": {
-                "ocr_mrz_match": ocr_mrz_match,
-                "database_match": database_result.get(
-                    "match"
+                "ocr_mrz_match": (
+                    ocr_mrz_match
+                ),
+                "database_match": (
+                    database_result.get(
+                        "match"
+                    )
                 )
             },
 
@@ -256,5 +317,8 @@ async def analyze_document(
 
         raise HTTPException(
             status_code=500,
-            detail=f"Document analysis failed: {str(error)}"
+            detail=(
+                "Document analysis failed: "
+                f"{str(error)}"
+            )
         )

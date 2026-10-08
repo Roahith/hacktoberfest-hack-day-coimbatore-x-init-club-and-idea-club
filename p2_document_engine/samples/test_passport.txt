@@ -1,7 +1,6 @@
 PASSPORT
-
 REPUBLIC OF FICTION
-PASSPORT
+DEMO DOCUMENT - NOT VALID
 
 Surname: DOE
 Given Names: JOHN
@@ -11,5 +10,5 @@ Date of Birth: 01/01/2005
 Sex: M
 Date of Expiry: 01/01/2035
 
-P<INDDOE<<JOHN<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-A12345676IND0501013M3501014<<<<<<<<<<<<<<<<<<
+P<INDDOE<<JOHN<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+A1234567<6IND0501013M3501014<<<<<<<<<<<<<<<<
