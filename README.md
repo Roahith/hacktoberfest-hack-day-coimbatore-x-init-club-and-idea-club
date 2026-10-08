@@ -150,9 +150,8 @@ cd [project-directory]
 
 ## Devpost Submission
 
-**Devpost Project:** [Devpost Project URL]
+**Devpost Project:** [[Devpost Project URL](https://dev.to/sharveshbr24/bordersight-57de)
 
-[Add the link to the team's Devpost submission. Ensure the Devpost project page is complete and contains the required project information, links, media, and team details.]
 
 ## Credits and License
 
