@@ -84,7 +84,7 @@ During the Hack Day, we built the main BorderSight workflow from scratch. We add
 
 ## Working Application
 
-Live Application : https://youtu.be/6l7iYI7Cg4s
+Live Application : (https://bordersight-qoidkjgan-nothing-bf59.vercel.app/)
 
 [Briefly explain how the deployed application can be accessed and what functionality can be tested.]
 
