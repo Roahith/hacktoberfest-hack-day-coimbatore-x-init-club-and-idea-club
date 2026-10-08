@@ -23,28 +23,27 @@ Immigration officers often rely on multiple manual checks to verify passports, v
 
 ### Why We Chose This Problem
 
-[Explain why the team selected this problem and why solving it is important.]
+We chose this problem because immigration screening involves sensitive decisions where missed inconsistencies can create security risks. BorderSight aims to make these checks faster, more consistent, and easier for officers to review.
 
 ## Solution
-
-[Describe the proposed solution and how it addresses the problem.]
-
+BorderSight brings passport, visa, identity, and security checks into one workflow, helping officers quickly identify mismatches and cases that need further review.
 ### Key Features
 
-- [Feature 1]
-- [Feature 2]
-- [Feature 3]
-- [Feature 4]
+- Passport and visa verification
+- Identity and face matching
+- Security record screening
+- Risk-based screening results for officer review
 
 ## Innovation and Differentiation
 
-[Explain what is innovative about the approach and how it differs from existing or conventional solutions.]
+BorderSight combines multiple verification checks into one workflow instead of relying on separate manual checks. It uses structured evidence and AI-assisted analysis to highlight inconsistencies while keeping the final decision with the human officer.
 
 ## Technical Implementation
 
 ### Architecture
 
-[Add the system architecture or workflow Mermaid diagram here.]
+
+
 
 ### Technology Stack
 
