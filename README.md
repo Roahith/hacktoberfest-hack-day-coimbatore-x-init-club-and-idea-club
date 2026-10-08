@@ -1,88 +1,90 @@
-# [Project Name]
+# BorderSight
 
-> [One-line description of the project and what it does.]
+> BorderSight helps immigration officers quickly verify a traveler’s passport, visa, identity, and security information, highlighting anything that may need a closer look.
 
 ## Team
 
-**Team Name:** [Team Name]
+**Team Name:** [TetraByte]
 
 
 | Member | Contribution   |
 | ------ | -------------- |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
+| Akhilesh Aravind J | Backend and Verification |
+| Sharvesh J B  | FrontEnd and Deployment |
+| Roahith P | AI and Decision engine |
+| Gaurav T | Document Intelligence |
 
 
 ## Problem Statement
 
 ### The Problem
 
-[Describe the problem being addressed, who is affected by it, and the context in which it occurs.]
+Immigration officers often rely on multiple manual checks to verify passports, visas, identities, and security information, making screening slower and increasing the chance of missed inconsistencies.
 
 ### Why We Chose This Problem
 
-[Explain why the team selected this problem and why solving it is important.]
+We chose this problem because immigration screening involves sensitive decisions where missed inconsistencies can create security risks. BorderSight aims to make these checks faster, more consistent, and easier for officers to review.
 
 ## Solution
-
-[Describe the proposed solution and how it addresses the problem.]
-
+BorderSight brings passport, visa, identity, and security checks into one workflow, helping officers quickly identify mismatches and cases that need further review.
 ### Key Features
 
-- [Feature 1]
-- [Feature 2]
-- [Feature 3]
-- [Feature 4]
+- Passport and visa verification
+- Identity and face matching
+- Security record screening
+- Risk-based screening results for officer review
 
 ## Innovation and Differentiation
 
-[Explain what is innovative about the approach and how it differs from existing or conventional solutions.]
+BorderSight combines multiple verification checks into one workflow instead of relying on separate manual checks. It uses structured evidence and AI-assisted analysis to highlight inconsistencies while keeping the final decision with the human officer.
 
 ## Technical Implementation
 
 ### Architecture
+![.](https://github.com/Roahith/hacktoberfest-hack-day-coimbatore-x-init-club-and-idea-club/blob/main/artart.jpeg?raw=true)
 
-[Add the system architecture or workflow Mermaid diagram here.]
+
+
 
 ### Technology Stack
 
 
-| Category        | Technologies                |
-| --------------- | --------------------------- |
-| Frontend        | [Technologies / N/A]        |
-| Backend         | [Technologies / N/A]        |
-| Database        | [Technologies / N/A]        |
-| AI / ML         | [Models / frameworks / N/A] |
-| Infrastructure  | [Technologies / N/A]        |
-| APIs / Services | [Services / N/A]            |
+| **Category** | **Technologies** |
+|---|---|
+| Frontend | React, Vite, JavaScript |
+| Backend | Python, FastAPI |
+| Database | JSON-based synthetic databases |
+| AI / ML | Gemma 4, OCR/MRZ processing, face verification |
+| Infrastructure | Vercel, Render |
+| APIs / Services | REST API, FastAPI endpoints |
 
 
-If a category or technology is not implemented in the project, specify `N/A` instead of leaving the field blank.
 
 ### How It Works
 
-[Explain the major components of the system and how they interact.]
+BorderSight consists of a web frontend and FastAPI backend. The backend handles passport, visa, security, and identity checks, combines the results into evidence, and produces a final screening result for the officer.
 
 ### Technical Decisions
 
-[Explain important architectural, algorithmic, or engineering decisions made during development.]
-
+Modular backend: Passport, visa, security, document, and AI checks are kept as separate modules so they can be tested and changed independently.
+Evidence-based decisions: Screening results are combined into a single risk result instead of letting the AI make the decision on its own.
+Synthetic data: We used demo databases and documents to safely demonstrate the workflow without relying on real government or security records.
+Human-in-the-loop: BorderSight flags cases for officer review rather than automatically making immigration decisions.
+Simple architecture: JSON-based storage and FastAPI were chosen to keep the prototype fast to build, test, and deploy during the hackathon.
 ## Implementation During the Hackathon
 
-[Describe what the team built during the Hack Day and the major functionality or components completed during the event.]
+During the Hack Day, we built the main BorderSight workflow from scratch. We added passport and visa checks, security screening, face verification, demo documents and databases, the FastAPI backend, and the officer dashboard.
 
 ### Team Contributions
 
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
-- **[Member Name]:** [Contribution]
+- **Roahith P:** AI, risk scoring, and decision logic
+- **Gaurav T:** Passport OCR, MRZ, and document verification
+- **Sharvesh J B:** Frontend dashboard and screening interface
+- **Akhilesh Aravind J:** Backend, immigration/security checks, and demo documents
 
 ## Working Application
 
-**Live Application:** [Live URL]
+Live Application : https://youtu.be/6l7iYI7Cg4s
 
 [Briefly explain how the deployed application can be accessed and what functionality can be tested.]
 
@@ -90,7 +92,7 @@ The submitted application should be functional and accessible through the provid
 
 ## Demo Video
 
-**Demo Video:** [Video URL]
+Demo Video: https://youtu.be/6l7iYI7Cg4s
 
 [Provide a short demonstration of the working project, covering the main user flow and important functionality.]
 
@@ -98,22 +100,22 @@ The submitted application should be functional and accessible through the provid
 
 ### AI / Models
 
-- **[Model]:** [How it is used]
+- Gemma 4: Used to analyse the screening results and explain the final result to the officer.
 
 ### Open Source Components
 
-- **[Library / Framework]:** [Purpose]
-- **[Dataset]:** [Purpose]
-- **[API / Service]:** [Purpose]
-
-[Include relevant licenses, attribution, and acknowledgements for external components.]
+- FastAPI: Backend API and screening workflow.
+- React + Vite: Frontend dashboard and user interface.
+- OpenCV: Face verification and image processing.
+- OCR / MRZ tools: Extract passport details and validate MRZ data.
+- Synthetic dataset: Demo passport, visa, and security records used for testing.
 
 ## Setup and Usage
 
 ### Prerequisites
 
-- [Requirement]
-- [Requirement]
+Node.js and npm
+Python 3.10+
 
 ### Installation
 
@@ -139,23 +141,27 @@ cd [project-directory]
 
 ### Usage
 
-[Explain the basic steps required to use the project.]
+1. Open the BorderSight web app.
+2. Create or select a test traveler.
+3. Upload the passport and visa documents.
+4. Run the screening process.
+5. Review the passport, visa, security, and identity checks.
+6. Check the final result and reasons shown by BorderSight.
 
 ## Devpost Submission
 
-**Devpost Project:** [Devpost Project URL]
+**Devpost Project:** [[Devpost Project URL](https://dev.to/sharveshbr24/bordersight-57de)
 
-[Add the link to the team's Devpost submission. Ensure the Devpost project page is complete and contains the required project information, links, media, and team details.]
 
 ## Credits and License
 
 ### Credits
 
-[Credit libraries, frameworks, datasets, models, APIs, contributors, and other external resources used.]
+FastAPI, React, Vite, Gemma 4, OpenCV, OCR/MRZ tools, synthetic datasets, Hacktoberfest.
 
 ### License
 
-[License name and/or link.]
+MIT License.
 
 ## Submission Checklist
 
