@@ -59,7 +59,6 @@ BorderSight combines multiple verification checks into one workflow instead of r
 | APIs / Services | REST API, FastAPI endpoints |
 
 
-If a category or technology is not implemented in the project, specify `N/A` instead of leaving the field blank.
 
 ### How It Works
 
