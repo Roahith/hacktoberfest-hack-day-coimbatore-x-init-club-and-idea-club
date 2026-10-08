@@ -4,13 +4,11 @@ import re
 def clean_mrz_line(line: str) -> str:
     line = line.upper().strip()
 
-    replacements = {
-        " ": "",
-    }
+    # OCR often misreads the MRZ filler character "<"
+    # as spaces or other characters.
+    line = line.replace(" ", "")
 
-    for old, new in replacements.items():
-        line = line.replace(old, new)
-
+    # Keep only characters that are valid in an MRZ.
     line = re.sub(r"[^A-Z0-9<]", "", line)
 
     return line
