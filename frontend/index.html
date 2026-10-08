@@ -372,7 +372,11 @@ run.onclick=async()=>{
  fd.append('file',file.files[0]);
 
  try{
-  const response=await fetch('https://four-icons-yawn.loca.lt/screen-document',{method:'POST',body:fd});
+  const response=await fetch('https://four-icons-yawn.loca.lt/screen-document',{
+    method:'POST',
+    headers:{'Bypass-Tunnel-Reminder':'true'},
+    body:fd
+  });
   const d=await response.json();
 
   if(!response.ok)throw new Error(d.detail||'Screening failed');
