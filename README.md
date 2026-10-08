@@ -1,4 +1,4 @@
-# BorderSight
+<img width="1240" height="1600" alt="image" src="https://github.com/user-attachments/assets/f53bf646-0bbf-47bb-a6eb-45b1fede6bd1" /># BorderSight
 
 > BorderSight helps immigration officers quickly verify a traveler’s passport, visa, identity, and security information, highlighting anything that may need a closer look.
 
@@ -41,6 +41,7 @@ BorderSight combines multiple verification checks into one workflow instead of r
 ## Technical Implementation
 
 ### Architecture
+![.](
 
 
 
