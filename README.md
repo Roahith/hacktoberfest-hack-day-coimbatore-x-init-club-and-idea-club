@@ -9,10 +9,10 @@
 
 | Member | Contribution   |
 | ------ | -------------- |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
-| [Name] | [Contribution] |
+| Akhilesh Aravind J | Backend and Verification |
+| Sharvesh J B  | FrontEnd and Deployment |
+| Roahith | AI and Decision engine |
+| Gaurav | Document Intelligence |
 
 
 ## Problem Statement
