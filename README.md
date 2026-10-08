@@ -11,8 +11,8 @@
 | ------ | -------------- |
 | Akhilesh Aravind J | Backend and Verification |
 | Sharvesh J B  | FrontEnd and Deployment |
-| Roahith | AI and Decision engine |
-| Gaurav | Document Intelligence |
+| Roahith P | AI and Decision engine |
+| Gaurav T | Document Intelligence |
 
 
 ## Problem Statement
