@@ -372,10 +372,9 @@ run.onclick=async()=>{
  fd.append('file',file.files[0]);
 
  try{
-  const response=await fetch('https://four-icons-yawn.loca.lt/screen-document',{
+  const response=await fetch('/screen-document',{
     method:'POST',
-    headers:{'Bypass-Tunnel-Reminder':'true'},
-    body:fd
+body:fd
   });
   const d=await response.json();
 
@@ -385,7 +384,7 @@ run.onclick=async()=>{
   const p=d.p3;
   const e=s.evidence;
 
-  document.getElementById('result').style.display='block';
+  document.getElementById('result').style.display='none';
   document.getElementById('biometric').style.display='block';
 
   const risk=document.getElementById('risk');
@@ -550,7 +549,7 @@ document.getElementById('register').onclick = async () => {
  try {
   // 1. Generate the synthetic passport/document pack
   //    and add the traveler to the screening database.
-  const travelerResponse = await fetch('https://four-icons-yawn.loca.lt/traveler/create', {
+  const travelerResponse = await fetch('/traveler/create', {
    method: 'POST',
    headers: {'Content-Type': 'application/json'},
    body: JSON.stringify({
@@ -575,7 +574,7 @@ document.getElementById('register').onclick = async () => {
   faceForm.append('file', window.referenceBlob || referenceBlob, `${passport}.jpg`);
 
   const faceResponse = await fetch(
-   `https://four-icons-yawn.loca.lt/biometric/register?passport=${encodeURIComponent(passport)}`,
+   `/biometric/register?passport=${encodeURIComponent(passport)}`,
    {
     method: 'POST',
     body: faceForm
@@ -857,7 +856,7 @@ document.addEventListener("DOMContentLoaded", function () {
         try {
 
             /* STEP 1 — CREATE TRAVELER + GENERATE DOCUMENT PACK */
-            const travelerResponse = await fetch("https://four-icons-yawn.loca.lt/traveler/create", {
+            const travelerResponse = await fetch("/traveler/create", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -906,7 +905,7 @@ document.addEventListener("DOMContentLoaded", function () {
             );
 
             const faceResponse = await fetch(
-                "https://four-icons-yawn.loca.lt/biometric/register?passport=" +
+                "/biometric/register?passport=" +
                 encodeURIComponent(passport),
                 {
                     method: "POST",
@@ -1033,7 +1032,7 @@ async function loadSecurityRecords() {
     if (!body) return;
 
     try {
-        const response = await fetch("https://four-icons-yawn.loca.lt/security/records");
+        const response = await fetch("/security/records");
 
         if (!response.ok) {
             throw new Error("Security API unavailable");
@@ -1098,7 +1097,7 @@ async function loadSecurityRecords() {
         if (!body) return;
 
         try {
-            const response = await fetch("https://four-icons-yawn.loca.lt/security/records?ts=" + Date.now());
+            const response = await fetch("/security/records?ts=" + Date.now());
 
             if (!response.ok) {
                 throw new Error("Security API returned " + response.status);
@@ -1160,6 +1159,299 @@ async function loadSecurityRecords() {
         setTimeout(refreshSecurityRecords, 300);
     });
 })();
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const panel = document.getElementById("biometric");
+  if (!panel || document.getElementById("quickFaceVerify")) return;
+
+  const box = document.createElement("div");
+  box.id = "quickFaceVerify";
+  box.style.cssText =
+    "margin-top:16px;padding:18px;border:1px solid #294057;border-radius:10px;background:#0b1420";
+
+  box.innerHTML = `
+    <div style="font-weight:600;margin-bottom:8px">Face Verification</div>
+    <div style="font-size:13px;color:#718096;margin-bottom:12px">
+      Upload a verification photo to compare against the registered passport reference.
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <input id="verifyFaceFile" type="file" accept="image/*">
+
+      <button id="verifyFaceBtn"
+              style="padding:10px 16px;border:0;border-radius:6px;cursor:pointer">
+        Verify Face
+      </button>
+    </div>
+
+    <div id="faceVerifyResult" style="margin-top:12px"></div>
+  `;
+
+  panel.appendChild(box);
+
+  document.getElementById("verifyFaceBtn").onclick = async () => {
+    const passport = document.getElementById("verifyPassport").value.trim();
+    const file = document.getElementById("verifyFaceFile").files[0];
+    const result = document.getElementById("faceVerifyResult");
+
+    if (!passport || !file) {
+      result.textContent = "Enter passport number and select a photo.";
+      return;
+    }
+
+    result.textContent = "Verifying face...";
+
+    try {
+      const response = await fetch(
+        "/biometric/verify?passport=" + encodeURIComponent(passport),
+        {
+          method: "POST",
+          body: (() => {
+            const fd = new FormData();
+            fd.append("file", file);
+            return fd;
+          })()
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Face verification failed");
+      }
+
+      const similarity = Number(data.similarity ?? 0);
+      const matched = data.match === true && Number(data.similarity ?? 0) >= 0.50;
+
+      // Final result is shown ONLY after biometric verification.
+      const finalResult = document.getElementById("result");
+      if (finalResult) finalResult.style.display = "block";
+
+      result.innerHTML = `
+        <div style="font-size:20px;font-weight:700">
+          ${matched ? "✓ CLEAR" : "✗ NOT OKAY"}
+        </div>
+        <div style="margin-top:6px">
+          Similarity: ${similarity.toFixed(4)}
+        </div>
+        <div style="margin-top:8px;font-size:13px;color:#718096">
+          ${matched
+            ? "Face matches the passport reference."
+            : "Face does not match the passport reference."}
+        </div>
+      `;
+
+      // Update the overall screening result to include biometric verification.
+      if (!matched) {
+        const risk = document.getElementById("risk");
+        if (risk) risk.textContent = "REVIEW";
+
+        const recommendation = document.getElementById("recommendation");
+        if (recommendation) recommendation.textContent = "SECONDARY REVIEW";
+
+        const score = document.getElementById("riskScore");
+        if (score) score.textContent = "60";
+      }
+    } catch (err) {
+      result.textContent = "Face verification error: " + err.message;
+    }
+  };
+});
+</script>
+
+
+<script>
+window.addEventListener("load", function () {
+  const btn = document.getElementById("verifyFaceBtn");
+  const fileInput = document.getElementById("verifyFaceFile");
+  const output = document.getElementById("faceVerifyResult");
+
+  if (!btn || !fileInput || !output) {
+    console.error("FACE VERIFY ELEMENTS NOT FOUND");
+    return;
+  }
+
+  btn.onclick = async function (event) {
+    event.preventDefault();
+
+    const file = fileInput.files && fileInput.files[0];
+
+    if (!file) {
+      output.innerHTML = "<b>Please choose a face image first.</b>";
+      return;
+    }
+
+    // Get passport number from the screening result automatically.
+    let passport = window.currentPassport || "";
+
+    if (!passport) {
+      const resultBox = document.getElementById("result");
+      const text = resultBox ? resultBox.textContent : "";
+
+      // Extract the passport number from the screening result.
+      const match = text.match(
+        /Passport\s*([A-Z][A-Z0-9]{5,15})/i
+      );
+
+      if (match) {
+        passport = match[1].trim();
+      }
+    }
+
+    console.log("Detected passport for face verification:", passport);
+
+    if (!passport) {
+      output.innerHTML = "<b>Passport number could not be detected. Run passport verification first.</b>";
+      return;
+    }
+
+    output.innerHTML = "<b>Verifying face...</b>";
+
+    try {
+      const form = new FormData();
+      form.append("file", file);
+
+      const url =
+        "/biometric/verify?passport=" +
+        encodeURIComponent(passport);
+
+      console.log("FACE VERIFY:", passport, file.name);
+
+      const response = await fetch(url, {
+        method: "POST",
+        body: form
+      });
+
+      const raw = await response.text();
+
+      console.log("FACE RESPONSE:", response.status, raw);
+
+      let data;
+
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        throw new Error(raw || "Invalid server response");
+      }
+
+      if (!response.ok) {
+        throw new Error(data.detail || "Face verification failed");
+      }
+
+      const similarity = Number(data.similarity ?? 0);
+      const matched = data.match === true && similarity >= 0.50;
+
+      // FINAL DECISION: biometric verification overrides the
+      // preliminary document-only result.
+      const finalResult = document.getElementById("result");
+      const riskElement = document.getElementById("risk");
+      const scoreElement = document.getElementById("score");
+      const recommendationElement = document.getElementById("recommendation");
+      const explanationElement = document.getElementById("explanation");
+
+      if (!matched) {
+        if (finalResult) finalResult.style.display = "block";
+        if (riskElement) {
+          riskElement.textContent = "NOT OKAY";
+          riskElement.className = "risk ALERT";
+          riskElement.style.color = "#ef4444";
+        }
+        if (scoreElement) scoreElement.textContent = "100";
+        if (recommendationElement) {
+          recommendationElement.textContent = "SECONDARY REVIEW";
+        }
+        const gemmaBox = document.querySelector("#result .gemma, #result [class*='explanation']");
+        if (gemmaBox) {
+          gemmaBox.textContent =
+            "Biometric verification failed: the verification face does not match the passport reference.";
+        }
+      } else {
+        if (finalResult) finalResult.style.display = "block";
+        if (riskElement) {
+          riskElement.textContent = "CLEAR";
+          riskElement.className = "risk CLEAR";
+          riskElement.style.color = "";
+        }
+        if (scoreElement) scoreElement.textContent = "0";
+        if (recommendationElement) {
+          recommendationElement.textContent = "CLEAR";
+        }
+        if (explanationElement) {
+          explanationElement.textContent =
+            "Biometric verification passed and the face matches the passport reference.";
+        }
+      }
+
+      if (matched) {
+        output.innerHTML = `
+          <div style="font-size:22px;font-weight:700">
+            ✓ CLEAR
+          </div>
+          <div style="margin-top:6px">
+            Face matches the passport reference.
+          </div>
+          <div style="margin-top:6px;font-size:13px">
+            Similarity: ${similarity}
+          </div>
+        `;
+      } else {
+        output.innerHTML = `
+          <div style="font-size:22px;font-weight:700">
+            ✗ NOT OKAY
+          </div>
+          <div style="margin-top:6px">
+            Face does not match the passport reference.
+          </div>
+          <div style="margin-top:6px;font-size:13px">
+            Similarity: ${similarity}
+          </div>
+        `;
+      }
+
+      // Show final result ONLY after biometric verification.
+      const finalResult = document.getElementById("result");
+
+      if (finalResult) {
+        finalResult.style.display = "block";
+
+        const risk = document.getElementById("risk");
+        if (risk) {
+          risk.textContent = matched ? "CLEAR" : "NOT OKAY";
+        }
+
+        const riskScore = document.getElementById("riskScore");
+        if (riskScore) {
+          riskScore.textContent = matched ? "0" : "60";
+        }
+
+        const recommendation =
+          document.getElementById("recommendation");
+
+        if (recommendation) {
+          recommendation.textContent =
+            matched ? "CLEAR" : "NOT OKAY";
+        }
+      }
+
+    } catch (error) {
+      console.error("FACE VERIFY ERROR:", error);
+
+      output.innerHTML = `
+        <div style="font-size:18px;font-weight:700">
+          Face verification failed
+        </div>
+        <div style="margin-top:6px;font-size:13px">
+          ${error.message}
+        </div>
+      `;
+    }
+  };
+
+  console.log("✅ FACE VERIFY HANDLER READY");
+});
 </script>
 
 </body>
