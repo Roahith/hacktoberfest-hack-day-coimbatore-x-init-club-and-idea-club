@@ -48,14 +48,14 @@ BorderSight combines multiple verification checks into one workflow instead of r
 ### Technology Stack
 
 
-| Category        | Technologies                |
-| --------------- | --------------------------- |
-| Frontend        | [Technologies / N/A]        |
-| Backend         | [Technologies / N/A]        |
-| Database        | [Technologies / N/A]        |
-| AI / ML         | [Models / frameworks / N/A] |
-| Infrastructure  | [Technologies / N/A]        |
-| APIs / Services | [Services / N/A]            |
+| **Category** | **Technologies** |
+|---|---|
+| Frontend | React, Vite, JavaScript |
+| Backend | Python, FastAPI |
+| Database | JSON-based synthetic databases |
+| AI / ML | Gemma 4, OCR/MRZ processing, face verification |
+| Infrastructure | Vercel, Render |
+| APIs / Services | REST API, FastAPI endpoints |
 
 
 If a category or technology is not implemented in the project, specify `N/A` instead of leaving the field blank.
