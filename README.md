@@ -100,22 +100,22 @@ The submitted application should be functional and accessible through the provid
 
 ### AI / Models
 
-- **[Model]:** [How it is used]
+- Gemma 4: Used to analyse the screening results and explain the final result to the officer.
 
 ### Open Source Components
 
-- **[Library / Framework]:** [Purpose]
-- **[Dataset]:** [Purpose]
-- **[API / Service]:** [Purpose]
-
-[Include relevant licenses, attribution, and acknowledgements for external components.]
+- FastAPI: Backend API and screening workflow.
+- React + Vite: Frontend dashboard and user interface.
+- OpenCV: Face verification and image processing.
+- OCR / MRZ tools: Extract passport details and validate MRZ data.
+- Synthetic dataset: Demo passport, visa, and security records used for testing.
 
 ## Setup and Usage
 
 ### Prerequisites
 
-- [Requirement]
-- [Requirement]
+Node.js and npm
+Python 3.10+
 
 ### Installation
 
@@ -141,7 +141,12 @@ cd [project-directory]
 
 ### Usage
 
-[Explain the basic steps required to use the project.]
+1. Open the BorderSight web app.
+2. Create or select a test traveler.
+3. Upload the passport and visa documents.
+4. Run the screening process.
+5. Review the passport, visa, security, and identity checks.
+6. Check the final result and reasons shown by BorderSight.
 
 ## Devpost Submission
 
@@ -153,11 +158,11 @@ cd [project-directory]
 
 ### Credits
 
-[Credit libraries, frameworks, datasets, models, APIs, contributors, and other external resources used.]
+FastAPI, React, Vite, Gemma 4, OpenCV, OCR/MRZ tools, synthetic datasets, Hacktoberfest.
 
 ### License
 
-[License name and/or link.]
+MIT License.
 
 ## Submission Checklist
 
