@@ -47,7 +47,7 @@ def screen_security(passport_details):
 
         # Passport number exists in the synthetic security database.
         if (
-            record["name"] == name
+            str(record["name"]).strip().casefold() == str(name).strip().casefold()
             and record["date_of_birth"] == dob
         ):
             if record["status"] == "REVIEW":

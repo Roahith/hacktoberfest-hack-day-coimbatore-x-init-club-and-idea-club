@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BorderSight</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#08111f;color:#e8f0fa;font-family:Arial,Helvetica,sans-serif}
+button,input,select{font:inherit}
+.app{display:flex;min-height:100vh}
+.sidebar{width:220px;background:#0b1727;border-right:1px solid #24364a;padding:22px 14px;flex-shrink:0}
+.brand{font-size:21px;font-weight:800;padding:10px 12px 28px;display:flex;align-items:center;gap:10px}
+.logo{width:36px;height:36px;border-radius:9px;background:#2878ed;display:grid;place-items:center}
+.nav{display:block;width:100%;padding:12px;border:0;border-radius:8px;background:transparent;color:#91a6bc;text-align:left;cursor:pointer;margin:5px 0}
+.nav.active,.nav:hover{background:#173453;color:white}
+.demo{position:fixed;bottom:18px;color:#5f7890;font-size:10px;padding:12px}
+
+main{flex:1;padding:28px;max-width:1400px}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:25px}
+h1{font-size:26px;margin:0}.subtitle{color:#7890a8;font-size:13px;margin-top:5px}
+.online{border:1px solid #285442;color:#55d6a1;border-radius:20px;padding:7px 11px;font-size:11px}
+
+.page{display:none}.page.active{display:block}
+.panel{background:#0d1b2b;border:1px solid #24394f;border-radius:14px;padding:22px;margin-bottom:16px}
+.panel-title{font-weight:800;font-size:16px}.muted{color:#8096ad;font-size:13px;margin-top:5px}
+
+.steps{display:flex;gap:8px;margin-bottom:15px}
+.step{flex:1;text-align:center;background:#101f31;padding:10px;border-radius:7px;color:#6f879f;font-size:11px}
+.step.active{background:#16436a;color:#62caff}
+
+.upload{display:block;width:100%;min-height:190px;border:2px dashed #315777;border-radius:12px;padding:45px 20px;text-align:center;margin-top:20px;cursor:pointer;position:relative;overflow:hidden}
+.upload:hover{border-color:#38bdf8;background:#10263b}
+.upload-icon{font-size:32px;color:#38bdf8}.upload-title{font-weight:800;font-size:17px;margin:10px}
+.file-name{background:#14263a;border-radius:7px;padding:10px;margin-top:12px;color:#b9cce0;font-size:12px}
+.btn{border:0;border-radius:8px;background:#2878ed;color:#fff;font-weight:800;padding:13px 18px;cursor:pointer}
+.btn:disabled{background:#274668;color:#91a6bc;cursor:not-allowed}
+.full{width:100%;margin-top:14px}
+
+.biometric{display:none}
+.camera-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.camera{height:230px;border-radius:10px;background:#050b12;border:1px solid #294057;display:flex;align-items:center;justify-content:center;text-align:center;color:#637b92}
+video{width:100%;height:100%;object-fit:cover;border-radius:10px}
+.actions{display:flex;gap:10px;margin-top:12px}
+
+.result{display:none}
+.result-head{display:flex;justify-content:space-between;align-items:center}
+.result-label{color:#8096ad;font-size:11px}.risk{font-size:34px;font-weight:900;margin-top:4px}
+.CLEAR{color:#34d399}.REVIEW{color:#fbbf24}.ALERT{color:#fb7185}
+.score-label{color:#8096ad;font-size:11px}.score{font-size:40px;font-weight:900}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.card{background:#101f31;border:1px solid #263d55;border-radius:10px;padding:15px}
+.card-title{color:#8eabc5;font-size:11px;font-weight:800;margin-bottom:10px}
+.row{display:flex;justify-content:space-between;padding:6px 0;color:#a8bbce;font-size:13px}
+.ok{color:#34d399}.bad{color:#fb7185}
+.ai{margin-top:14px;background:#10283c;border-left:3px solid #38bdf8;padding:15px;font-size:13px;line-height:1.5}
+.reason{margin-top:8px;padding:10px;background:#261a1d;border-left:3px solid #fb7185;color:#d5bfc2;font-size:12px}
+
+.notice{padding:12px;background:#10283c;border-left:3px solid #38bdf8;color:#a9bfd2;font-size:12px;margin-bottom:14px}
+table{width:100%;border-collapse:collapse;margin-top:18px}
+th,td{text-align:left;padding:12px;border-bottom:1px solid #203147;font-size:12px}
+th{color:#7890a8;font-size:10px}
+.clear-pill,.review-pill{padding:5px 9px;border-radius:15px;font-size:10px}
+.clear-pill{background:#12352c;color:#45d89e}.review-pill{background:#3c3014;color:#f4c84e}
+
+.form{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}
+label.field{color:#8ca2b8;font-size:11px}
+.field input,.field select{display:block;width:100%;margin-top:6px;background:#091625;border:1px solid #2b4056;border-radius:7px;padding:11px;color:#fff}
+.success{margin-top:15px;color:#55d6a1}
+
+@media(max-width:750px){
+.sidebar{width:65px}.brand span,.nav span{display:none}
+main{padding:18px}.grid,.camera-grid,.form{grid-template-columns:1fr}
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<aside class="sidebar">
+<div class="brand"><div class="logo">B</div><span>BorderSight</span></div>
+
+<button class="nav active" data-page="screen">◆ <span>Screening</span></button>
+<button class="nav" data-page="security">◉ <span>Security Records</span></button>
+<button class="nav" data-page="admin">＋ <span>Admin Registration</span></button>
+
+<div class="demo">DEMO ENVIRONMENT<br>Synthetic data only</div>
+</aside>
+
+<main>
+<div class="header">
+<div>
+<h1 id="title">Border Screening</h1>
+<div class="subtitle">AI-assisted immigration pre-screening for human officers</div>
+</div>
+<div class="online">● SYSTEM ONLINE</div>
+</div>
+
+<!-- SCREENING -->
+<section id="screen" class="page active">
+
+<div class="steps">
+<div class="step active">01 · PASSPORT</div>
+<div class="step">02 · BIOMETRIC</div>
+<div class="step">03 · DECISION</div>
+</div>
+
+<div class="panel">
+<div class="panel-title">New Traveler Screening</div>
+<div class="muted">Upload a passport to begin document, immigration and security verification.</div>
+
+<label class="upload">
+<input id="file" type="file" accept=".pdf,.png,.jpg,.jpeg" style="position:absolute;width:1px;height:1px;opacity:0">
+<div class="upload-icon">▧</div>
+<div class="upload-title">Upload Passport</div>
+<div class="muted">PDF, PNG or JPEG · Synthetic demo documents supported</div>
+</label>
+
+<div id="fileName" class="file-name" style="display:none"></div>
+<button id="run" class="btn full" disabled>Run BorderSight Verification</button>
+</div>
+
+<!-- BIOMETRIC -->
+<div id="biometric" class="panel biometric">
+
+<div class="muted">Capture a live face for officer-assisted identity verification.</div>
+
+<div class="camera-grid">
+<div class="camera">Passport portrait<br><br>Extracted from uploaded document</div>
+<div class="camera"><video id="video" autoplay playsinline></video></div>
+</div>
+
+<div class="actions">
+
+
+</div>
+
+<div id="faceMsg" class="notice" style="display:none;margin-top:12px"></div>
+</div>
+
+<!-- RESULT -->
+<div id="result" class="panel result">
+
+<div class="result-head">
+<div>
+<div class="result-label">FINAL SCREENING RESULT</div>
+<div id="risk" class="risk CLEAR">CLEAR</div>
+<div id="recommendation" class="muted"></div>
+</div>
+
+<div style="text-align:right">
+<div class="score-label">RISK SCORE</div>
+<div id="score" class="score">0</div>
+</div>
+</div>
+
+<div class="grid">
+
+<div class="card">
+<div class="card-title">TRAVELER</div>
+<div class="row">Name <b id="name">—</b></div>
+<div class="row">Passport <b id="passport">—</b></div>
+<div class="row">Nationality <b id="nationality">—</b></div>
+</div>
+
+<div class="card">
+<div class="card-title">DOCUMENT VERIFICATION</div>
+<div class="row">Passport <b id="passportCheck">—</b></div>
+<div class="row">MRZ <b id="mrzCheck">—</b></div>
+<div class="row">Fields <b id="fieldCheck">—</b></div>
+</div>
+
+<div class="card">
+<div class="card-title">IMMIGRATION</div>
+<div class="row">Visa required <b id="visaRequired">—</b></div>
+<div class="row">Visa valid <b id="visaValid">—</b></div>
+<div class="row">Passport match <b id="visaMatch">—</b></div>
+</div>
+
+<div class="card">
+<div class="card-title">SECURITY SCREENING</div>
+<div class="row">Status <b id="securityStatus">—</b></div>
+<div class="row">Database <b>Synthetic records</b></div>
+</div>
+
+</div>
+
+<div class="ai">
+<b style="color:#38bdf8">GEMMA 4 EXPLANATION</b>
+<div id="aiText" style="margin-top:7px">—</div>
+</div>
+
+<div id="reasons"></div>
+</div>
+</section>
+
+<!-- SECURITY -->
+<section id="security" class="page">
+
+<div class="notice">
+Security records shown here are synthetic demonstration data. BorderSight does not connect to INTERPOL or government systems.
+</div>
+
+<div class="panel">
+<div class="panel-title">Security Records</div>
+<div class="muted">Records used by the BorderSight screening engine.</div>
+
+<table>
+<thead>
+<tr><th>RECORD</th><th>NAME</th><th>PASSPORT</th><th>DOB</th><th>STATUS</th></tr>
+</thead>
+<tbody id="securityTableBody">
+<tr>
+<td colspan="5" style="text-align:center;padding:30px;color:#718096">
+Loading registered travelers...
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- ADMIN -->
+<section id="admin" class="page">
+
+<div class="notice">
+Demo administrator console. Registration is local to this prototype and does not require production credentials.
+</div>
+
+<div class="panel">
+<div class="panel-title">Register New Traveler</div>
+<div class="muted">Create a synthetic passport / immigration record for demonstrations.</div>
+
+<div class="form">
+<label class="field">FULL NAME<input id="rName" placeholder="John Carter"></label>
+<label class="field">DATE OF BIRTH<input id="rDob" type="date"></label>
+<label class="field">NATIONALITY<select id="rNat"><option>USA</option><option>UK</option><option>INDIA</option></select></label>
+<label class="field">PASSPORT NUMBER<input id="rPass" placeholder="D10010004"></label>
+<label class="field">PASSPORT EXPIRY<input id="rExp" type="date"></label>
+<label class="field">VISA ID<input id="rVisa" placeholder="DEMO-V-2004"></label>
+<label class="field">VISA EXPIRY<input id="rVisaExp" type="date"></label>
+<label class="field">SECURITY STATUS<select id="rSec"><option>CLEAR</option><option>REVIEW</option></select></label>
+</div>
+
+
+
+<div class="panel" style="margin-top:18px">
+ <div class="panel-title">Passport Photo & Biometric Reference</div>
+ <p style="color:#718096;font-size:13px">
+   Upload one clear passport-style photo. It will be used for the passport and biometric verification.
+ </p>
+
+ <input
+   id="referencePhotoUpload"
+   type="file"
+   accept="image/*"
+   style="display:block;margin:15px 0;width:100%"
+ >
+
+ <div id="faceMsg"
+      style="padding:14px;border:1px solid #26384a;border-radius:10px">
+   No reference face selected.
+ </div>
+</div>
+<div class="panel" style="margin-top:18px">
+ <div class="panel-title">Passport Photo & Biometric Reference Registration</div>
+
+ <p style="color:#718096;font-size:13px;margin:8px 0 14px">
+   Capture a reference face for biometric verification during later screening.
+ </p>
+
+ <div style="display:grid;grid-template-columns:minmax(280px,420px) 1fr;gap:20px;align-items:start">
+
+  <div>
+   <video
+    id="referenceCamera"
+    autoplay
+    playsinline
+    muted
+    style="width:100%;aspect-ratio:4/3;object-fit:cover;background:#05080c;border-radius:12px;border:1px solid #26384a">
+   </video>
+
+   <div style="display:flex;gap:10px;margin-top:12px">
+    <button type="button" class="primary" style="flex:1"
+ onclick="startReferenceCamera()">
+ Enable Camera
+</button>
+
+<button type="button" class="primary" style="flex:1"
+ onclick="captureReferenceFace()">
+ Capture Face
+</button>
+
+<label class="primary" style="flex:1;text-align:center;cursor:pointer;padding:10px">
+ Use Photo
+ <input id="referenceFile" type="file" accept="image/*" style="display:none"
+ onchange="useReferencePhoto(event)">
+</label>
+   </div>
+  </div>
+
+  <div>
+   <div
+    id="faceMsg"
+    style="display:block;padding:16px;border:1px solid #26384a;border-radius:10px;color:#718096">
+    
+   </div>
+
+   <div
+    style="margin-top:12px;padding:14px;border-radius:10px;background:#0b1118;border:1px solid #1c2a38">
+    <strong style="color:#dce7f2">Biometric reference</strong>
+    <p style="font-size:12px;color:#718096;margin:7px 0 0">
+      YuNet will detect the face and SFace will create the reference embedding.
+      The reference is linked to this traveler's passport number.
+    </p>
+   </div>
+  </div>
+
+ </div>
+</div>
+
+<button id="register" class="btn" style="margin-top:20px">Register Traveler</button>
+<div id="regMessage"></div>
+</div>
+</section>
+
+</main>
+</div>
+
+<script>
+let referenceBlob = null;
+
+const navs=document.querySelectorAll('.nav');
+const pages=document.querySelectorAll('.page');
+
+navs.forEach(n=>{
+ n.onclick=()=>{
+  navs.forEach(x=>x.classList.remove('active'));
+  pages.forEach(x=>x.classList.remove('active'));
+  n.classList.add('active');
+  document.getElementById(n.dataset.page).classList.add('active');
+
+  document.getElementById('title').textContent=
+   n.dataset.page==='screen'?'Border Screening':
+   n.dataset.page==='security'?'Security Records':
+   'Admin Registration';
+ };
+});
+
+const file=document.getElementById('file');
+const run=document.getElementById('run');
+
+file.onchange=()=>{
+ if(!file.files[0])return;
+ document.getElementById('fileName').style.display='block';
+ document.getElementById('fileName').textContent='Selected: '+file.files[0].name;
+ run.disabled=false;
+};
+
+function check(id,value){
+ const e=document.getElementById(id);
+ e.textContent=value?'✓ YES':'✕ NO';
+ e.className=value?'ok':'bad';
+}
+
+run.onclick=async()=>{
+ run.disabled=true;
+ run.textContent='Analyzing document…';
+
+ const fd=new FormData();
+ fd.append('file',file.files[0]);
+
+ try{
+  const response=await fetch('/screen-document',{method:'POST',body:fd});
+  const d=await response.json();
+
+  if(!response.ok)throw new Error(d.detail||'Screening failed');
+
+  const s=d.screening;
+  const p=d.p3;
+  const e=s.evidence;
+
+  document.getElementById('result').style.display='block';
+  document.getElementById('biometric').style.display='block';
+
+  const risk=document.getElementById('risk');
+  risk.textContent=s.risk_level;
+  risk.className='risk '+s.risk_level;
+
+  document.getElementById('score').textContent=s.risk_score;
+  document.getElementById('recommendation').textContent=
+   s.recommendation==='CLEAR'
+   ?'Officer recommendation: CLEAR'
+   :'Officer recommendation: SECONDARY REVIEW';
+
+  document.getElementById('name').textContent=p.traveler.name||'—';
+  document.getElementById('passport').textContent=p.traveler.passport_number||'—';
+  document.getElementById('nationality').textContent=p.traveler.nationality||'—';
+
+  check('passportCheck',e.document.passport_found);
+  check('mrzCheck',e.document.mrz_valid);
+  check('fieldCheck',e.document.fields_match);
+  check('visaValid',e.immigration.visa_valid);
+  check('visaMatch',e.immigration.visa_passport_match);
+
+  document.getElementById('visaRequired').textContent=
+   e.immigration.visa_required?'YES':'NO';
+
+  document.getElementById('securityStatus').textContent=
+   e.security.match?'SECONDARY REVIEW':'CLEAR';
+
+  document.getElementById('securityStatus').className=
+   e.security.match?'bad':'ok';
+
+  document.getElementById('aiText').textContent=
+   s.ai?.summary||'No Gemma explanation returned.';
+
+  document.getElementById('reasons').innerHTML=
+   (s.reasons||[]).map(x=>'<div class="reason">⚠ '+x+'</div>').join('');
+
+  document.getElementById('result').scrollIntoView({behavior:'smooth'});
+ }catch(err){
+  alert(err.message);
+ }finally{
+  run.disabled=false;
+  run.textContent='Run BorderSight Verification';
+ }
+};
+
+
+document.getElementById('camera').addEventListener('click', async function () {
+ try {
+  console.log('Starting camera...');
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+   alert('Camera API is not available in this browser/context.');
+   return;
+  }
+
+  const stream = await navigator.mediaDevices.getUserMedia({
+   video: true,
+   audio: false
+  });
+
+  const video = document.getElementById('referenceCamera');
+
+  if (!video) {
+   alert('Camera video element not found.');
+   return;
+  }
+
+  video.srcObject = stream;
+  video.muted = true;
+  video.autoplay = true;
+  video.playsInline = true;
+
+  await video.play();
+
+  document.getElementById('faceMsg').textContent =
+   '✓ Camera enabled. Position the face in the frame and click Capture Face.';
+
+  console.log('Camera enabled successfully.');
+
+ } catch (error) {
+  console.error('CAMERA ERROR:', error);
+
+  alert(
+   'Camera could not start:\\n\\n' +
+   error.name + ': ' + error.message
+  );
+ }
+});
+
+
+document.getElementById('capture').addEventListener('click', async function () {
+ try {
+  const video = document.getElementById('referenceCamera');
+
+  if (!video || !video.srcObject) {
+   alert('Click Enable Camera first.');
+   return;
+  }
+
+  const canvas = document.createElement('canvas');
+
+  canvas.width = video.videoWidth;
+  canvas.height = video.videoHeight;
+
+  if (!canvas.width || !canvas.height) {
+   alert('Camera video is not ready yet. Wait a moment and try again.');
+   return;
+  }
+
+  canvas.getContext('2d').drawImage(
+   video,
+   0,
+   0,
+   canvas.width,
+   canvas.height
+  );
+
+  canvas.toBlob(function(blob) {
+   if (!blob) {
+    alert('Could not capture image.');
+    return;
+   }
+
+   referenceBlob = blob;
+
+   document.getElementById('faceMsg').textContent =
+    '✓ Face image captured. Click Register Traveler to save it.';
+
+   console.log('Reference face captured.');
+
+  }, 'image/jpeg', 0.92);
+
+ } catch (error) {
+  console.error('CAPTURE ERROR:', error);
+  alert('Capture failed: ' + error.message);
+ }
+});
+
+
+document.getElementById('register').onclick = async () => {
+ const name = document.getElementById('rName').value.trim();
+ const passport = document.getElementById('rPass').value.trim();
+ const nationality = document.getElementById('rNat').value.trim();
+ const dob = document.getElementById('rDob').value;
+ const expiry = document.getElementById('rExp').value;
+
+ if (!name || !passport || !nationality) {
+  alert('Name, passport number and nationality are required.');
+  return;
+ }
+
+ if (!window.referenceBlob && !referenceBlob) {
+  alert('Capture the reference face first.');
+  return;
+ }
+
+ const button = document.getElementById('register');
+ button.disabled = true;
+ button.textContent = 'Registering...';
+
+ try {
+  // 1. Generate the synthetic passport/document pack
+  //    and add the traveler to the screening database.
+  const travelerResponse = await fetch('/traveler/create', {
+   method: 'POST',
+   headers: {'Content-Type': 'application/json'},
+   body: JSON.stringify({
+    name: name,
+    passport_number: passport,
+    nationality: nationality,
+    date_of_birth: dob || null,
+    expiry: expiry || null
+   })
+  });
+
+  const travelerResult = await travelerResponse.json();
+
+  if (!travelerResponse.ok) {
+   throw new Error(
+    travelerResult.detail || 'Traveler registration failed'
+   );
+  }
+
+  // 2. Save the actual reference face.
+  const faceForm = new FormData();
+  faceForm.append('file', window.referenceBlob || referenceBlob, `${passport}.jpg`);
+
+  const faceResponse = await fetch(
+   `/biometric/register?passport=${encodeURIComponent(passport)}`,
+   {
+    method: 'POST',
+    body: faceForm
+   }
+  );
+
+  const faceResult = await faceResponse.json();
+
+  if (!faceResponse.ok) {
+   throw new Error(
+    faceResult.detail || 'Reference face registration failed'
+   );
+  }
+
+  // 3. Keep the UI registration list.
+  const records = JSON.parse(
+   localStorage.getItem('bordersight_registrations') || '[]'
+  );
+
+  records.push({
+   name,
+   passport,
+   nationality,
+   dob,
+   expiry,
+   visa: document.getElementById('rVisa').value,
+   visaExpiry: document.getElementById('rVisaExp').value,
+   security: document.getElementById('rSec').value,
+   faceRegistered: true,
+   registeredAt: new Date().toISOString()
+  });
+
+  localStorage.setItem(
+   'bordersight_registrations',
+   JSON.stringify(records)
+  );
+
+  const msg = document.getElementById('regMessage');
+  msg.className = 'success';
+  msg.innerHTML =
+   '✓ Traveler registered successfully.<br>' +
+   '✓ Synthetic passport generated.<br>' +
+   '✓ Reference face captured.<br>' +
+   '✓ Traveler added to screening database.';
+
+  referenceBlob = null;
+
+  // Show generated document information when available.
+  if (travelerResult.documents) {
+   console.log('Generated document pack:', travelerResult.documents);
+  }
+
+ } catch (error) {
+  alert(error.message);
+ } finally {
+  button.disabled = false;
+  button.textContent = 'Register Traveler';
+ }
+};
+
+
+
+</script>
+
+<script>
+/* BORDERSIGHT CAMERA EMERGENCY PATCH */
+
+window.bsReferenceBlob = null;
+
+window.bsStartCamera = async function () {
+    const video = document.getElementById("referenceCamera");
+    const msg = document.getElementById("faceMsg");
+
+    if (!video) {
+        alert("Camera video element missing.");
+        return;
+    }
+
+    try {
+        console.log("BORDERSIGHT: requesting camera");
+
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: false
+        });
+
+        video.srcObject = stream;
+        video.setAttribute("autoplay", "");
+        video.setAttribute("playsinline", "");
+        video.muted = true;
+
+        await video.play();
+
+        if (msg) {
+            msg.textContent =
+                "✓ ";
+        }
+
+        console.log("BORDERSIGHT: CAMERA ACTIVE");
+
+    } catch (err) {
+        console.error("BORDERSIGHT CAMERA ERROR", err);
+
+        if (msg) {
+            msg.textContent = "Camera unavailable — use Upload Photo.";
+        }
+
+        alert(
+            "Camera permission failed.\n\n" +
+            err.name + "\n" +
+            err.message +
+            "\n\nYou can use Upload Photo instead."
+        );
+    }
+};
+
+window.bsCaptureFace = function () {
+    const video = document.getElementById("referenceCamera");
+
+    if (!video || !video.srcObject) {
+        alert("Click Enable Camera first.");
+        return;
+    }
+
+    if (!video.videoWidth || !video.videoHeight) {
+        alert("Camera is starting. Wait one second and click Capture again.");
+        return;
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    canvas.getContext("2d").drawImage(
+        video,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+    canvas.toBlob(function (blob) {
+        window.bsReferenceBlob = blob;
+
+        const msg = document.getElementById("faceMsg");
+        if (msg) {
+            msg.textContent = "✓ Reference face captured.";
+        }
+
+        console.log("BORDERSIGHT: FACE CAPTURED");
+    }, "image/jpeg", 0.92);
+};
+
+window.bsPhotoSelected = function (event) {
+    const file = event.target.files[0];
+
+    if (!file) return;
+
+    window.bsReferenceBlob = file;
+
+    const msg = document.getElementById("faceMsg");
+    if (msg) {
+        msg.textContent = "✓ Reference photo selected.";
+    }
+
+    console.log("BORDERSIGHT: PHOTO SELECTED");
+};
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const cameraButton = document.getElementById("camera");
+    const captureButton = document.getElementById("capture");
+
+    if (cameraButton) {
+        cameraButton.onclick = window.bsStartCamera;
+        cameraButton.type = "button";
+    }
+
+    if (captureButton) {
+        captureButton.onclick = window.bsCaptureFace;
+        captureButton.type = "button";
+    }
+
+    console.log("BORDERSIGHT: emergency camera handler installed");
+});
+
+// BorderSight reference photo upload
+(function () {
+    const input = document.getElementById("referencePhotoUpload");
+
+    if (!input) {
+        console.warn("Reference photo input not found");
+        return;
+    }
+
+    input.addEventListener("change", function () {
+        const file = this.files && this.files[0];
+
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            alert("Please select an image file.");
+            this.value = "";
+            return;
+        }
+
+        window.bsReferenceBlob = file;
+        window.referenceBlob = file;
+
+        const msg = document.getElementById("faceMsg");
+
+        if (msg) {
+            msg.className = "success";
+            msg.style.display = "block";
+            msg.textContent =
+                "✓ Reference photo selected: " + file.name;
+        }
+
+        console.log("BorderSight reference photo ready:", file.name);
+    });
+})();
+
+</script>
+
+
+<script>
+/* FINAL BORDERSIGHT REGISTER HANDLER */
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const registerButton = document.getElementById("register");
+
+    if (!registerButton) {
+        console.error("BorderSight: register button not found");
+        return;
+    }
+
+    registerButton.type = "button";
+
+    registerButton.onclick = async function (event) {
+        event.preventDefault();
+
+        const name = document.getElementById("rName")?.value.trim();
+        const passport = document.getElementById("rPass")?.value.trim();
+        const nationality = document.getElementById("rNat")?.value.trim();
+        const dob = document.getElementById("rDob")?.value || null;
+        const expiry = document.getElementById("rExp")?.value || null;
+
+        const photoInput =
+            document.getElementById("referencePhotoUpload");
+
+        const photo =
+            window.bsReferenceBlob ||
+            window.referenceBlob ||
+            (photoInput && photoInput.files[0]);
+
+        console.log("BorderSight registration:", {
+            name,
+            passport,
+            nationality,
+            dob,
+            expiry,
+            photo: !!photo
+        });
+
+        if (!name || !passport || !nationality) {
+            alert("Name, passport number and nationality are required.");
+            return;
+        }
+
+        if (!photo) {
+            alert("Please select a reference face photo first.");
+            return;
+        }
+
+        registerButton.disabled = true;
+        registerButton.textContent = "Registering...";
+
+        try {
+
+            /* STEP 1 — CREATE TRAVELER + GENERATE DOCUMENT PACK */
+            const travelerResponse = await fetch("/traveler/create", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    name: name,
+                    passport_number: passport,
+                    nationality: nationality,
+                    date_of_birth: dob,
+                    expiry: expiry
+                })
+            });
+
+            const travelerText = await travelerResponse.text();
+
+            let travelerResult;
+            try {
+                travelerResult = JSON.parse(travelerText);
+            } catch {
+                throw new Error(
+                    "Backend returned invalid response: " +
+                    travelerText.substring(0, 300)
+                );
+            }
+
+            if (!travelerResponse.ok) {
+                throw new Error(
+                    travelerResult.detail ||
+                    "Traveler creation failed"
+                );
+            }
+
+            console.log(
+                "Traveler created:",
+                travelerResult
+            );
+
+
+            /* STEP 2 — REGISTER REFERENCE FACE */
+            const faceForm = new FormData();
+
+            faceForm.append(
+                "file",
+                photo,
+                passport + ".jpg"
+            );
+
+            const faceResponse = await fetch(
+                "/biometric/register?passport=" +
+                encodeURIComponent(passport),
+                {
+                    method: "POST",
+                    body: faceForm
+                }
+            );
+
+            const faceText = await faceResponse.text();
+
+            let faceResult;
+            try {
+                faceResult = JSON.parse(faceText);
+            } catch {
+                throw new Error(
+                    "Biometric backend returned invalid response: " +
+                    faceText.substring(0, 300)
+                );
+            }
+
+            if (!faceResponse.ok) {
+                throw new Error(
+                    faceResult.detail ||
+                    "Face registration failed"
+                );
+            }
+
+            console.log(
+                "Face registered:",
+                faceResult
+            );
+
+
+            /* STEP 3 — SAVE UI REGISTRATION */
+            const records = JSON.parse(
+                localStorage.getItem(
+                    "bordersight_registrations"
+                ) || "[]"
+            );
+
+            records.push({
+                name: name,
+                passport: passport,
+                nationality: nationality,
+                dob: dob,
+                expiry: expiry,
+                faceRegistered: true,
+                registeredAt: new Date().toISOString()
+            });
+
+            localStorage.setItem(
+                "bordersight_registrations",
+                JSON.stringify(records)
+            );
+
+
+            /* SUCCESS */
+            const message =
+                document.getElementById("regMessage");
+
+            if (message) {
+                message.className = "success";
+                message.style.display = "block";
+                const downloads = travelerResult.downloads || {};
+
+const passportPath = downloads.passport || "";
+const visaPath = downloads.visa || "";
+
+function downloadLink(path, label) {
+    if (!path) return "";
+
+    return '<a href="/documents/download?path=' +
+        encodeURIComponent(path) +
+        '" target="_blank" ' +
+        'style="display:inline-block;margin:8px 6px 0 0;padding:10px 14px;' +
+        'background:#1769ff;color:white;border-radius:7px;text-decoration:none">' +
+        label +
+        '</a>';
+}
+
+message.innerHTML =
+    "✓ TRAVELER REGISTERED<br>" +
+    "✓ Synthetic passport generated<br>" +
+    "✓ Visa document generated<br>" +
+    "✓ Passport added to screening database<br>" +
+    "✓ Reference face registered<br><br>" +
+    downloadLink(passportPath, "📄 Download Passport") +
+    downloadLink(visaPath, "📄 Download Visa");
+            }
+
+            alert(
+                "✓ Traveler registered successfully!\n\n" +
+                "Passport: " + passport +
+                "\nReference face: REGISTERED"
+            );
+
+            registerButton.textContent =
+                "✓ Registered";
+
+        } catch (error) {
+
+            console.error(
+                "BORDERSIGHT REGISTRATION ERROR:",
+                error
+            );
+
+            alert(
+                "Registration failed:\n\n" +
+                error.message
+            );
+
+            registerButton.disabled = false;
+            registerButton.textContent =
+                "Register Traveler";
+        }
+    };
+
+    console.log(
+        "✓ BorderSight FINAL registration handler installed"
+    );
+});
+
+async function loadSecurityRecords() {
+    const body = document.getElementById("securityTableBody");
+    if (!body) return;
+
+    try {
+        const response = await fetch("/security/records");
+
+        if (!response.ok) {
+            throw new Error("Security API unavailable");
+        }
+
+        const data = await response.json();
+
+        const records =
+            data.records ||
+            data.security_records ||
+            (Array.isArray(data) ? data : []);
+
+        if (!records.length) {
+            body.innerHTML = `
+                <tr>
+                    <td colspan="5"
+                        style="text-align:center;padding:30px;color:#718096">
+                        No registered travelers yet.
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        body.innerHTML = records.map((r, i) => `
+            <tr>
+                <td>${r.record_id || "SEC-" + String(i + 1).padStart(4, "0")}</td>
+                <td>${r.name || "—"}</td>
+                <td>${r.passport_number || "—"}</td>
+                <td>${r.date_of_birth || "—"}</td>
+                <td>
+                    <span class="${r.status === "REVIEW"
+                        ? "review-pill"
+                        : "clear-pill"}">
+                        ${r.status || "CLEAR"}
+                    </span>
+                </td>
+            </tr>
+        `).join("");
+
+    } catch (error) {
+        console.error("Security records:", error);
+
+        body.innerHTML = `
+            <tr>
+                <td colspan="5"
+                    style="text-align:center;padding:30px;color:#718096">
+                    Security records unavailable.
+                </td>
+            </tr>`;
+    }
+}
+
+</script>
+
+
+<script>
+/* FINAL SECURITY RECORD REFRESH */
+
+(function () {
+    async function refreshSecurityRecords() {
+        const body = document.getElementById("securityTableBody");
+        if (!body) return;
+
+        try {
+            const response = await fetch("/security/records?ts=" + Date.now());
+
+            if (!response.ok) {
+                throw new Error("Security API returned " + response.status);
+            }
+
+            const data = await response.json();
+            const records = data.records || [];
+
+            if (!records.length) {
+                body.innerHTML = `
+                    <tr>
+                        <td colspan="5"
+                            style="text-align:center;padding:30px;color:#718096">
+                            No registered travelers yet.
+                        </td>
+                    </tr>`;
+                return;
+            }
+
+            body.innerHTML = records.map((r, i) => `
+                <tr>
+                    <td>${r.record_id || "SEC-" + (i + 1)}</td>
+                    <td>${r.name || "—"}</td>
+                    <td>${r.passport_number || "—"}</td>
+                    <td>${r.date_of_birth || "—"}</td>
+                    <td>
+                        <span class="${
+                            r.status === "REVIEW"
+                            ? "review-pill"
+                            : "clear-pill"
+                        }">
+                            ${r.status || "CLEAR"}
+                        </span>
+                    </td>
+                </tr>
+            `).join("");
+
+            console.log("✓ Security records refreshed:", records.length);
+
+        } catch (e) {
+            console.error("Security refresh failed:", e);
+        }
+    }
+
+    window.refreshSecurityRecords = refreshSecurityRecords;
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        /* Refresh when Security Records is clicked */
+        document.querySelectorAll(".nav").forEach(function (button) {
+            button.addEventListener("click", function () {
+                if (this.dataset.page === "security") {
+                    setTimeout(refreshSecurityRecords, 100);
+                }
+            });
+        });
+
+        /* Initial load */
+        setTimeout(refreshSecurityRecords, 300);
+    });
+})();
+</script>
+
+</body>
+</html>

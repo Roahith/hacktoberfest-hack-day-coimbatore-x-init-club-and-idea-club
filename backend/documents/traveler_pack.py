@@ -277,12 +277,21 @@ def build_pdf(path, title, document_type, fields, notes):
     )
 
     for note in notes:
-        story.append(
-            Paragraph(
-                f"• {note}",
-                NORMAL_STYLE,
+        # Render MRZ lines without the bullet so OCR can detect them.
+        if note.startswith("P&lt;") or (len(note) >= 40 and note[0].isalnum()):
+            story.append(
+                Paragraph(
+                    note,
+                    NORMAL_STYLE,
+                )
             )
-        )
+        else:
+            story.append(
+                Paragraph(
+                    f"• {note}",
+                    NORMAL_STYLE,
+                )
+            )
 
     story.append(Spacer(1, 25))
 
@@ -310,13 +319,87 @@ def build_pdf(path, title, document_type, fields, notes):
 # ORIGINAL PASSPORT
 # ============================================================
 
+
+def _mrz_check(value):
+    weights = [7, 3, 1]
+    chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ<"
+    total = 0
+
+    for i, ch in enumerate(value):
+        if ch.isdigit():
+            v = int(ch)
+        elif ch == "<":
+            v = 0
+        else:
+            v = chars.index(ch)
+
+        total += v * weights[i % 3]
+
+    return str(total % 10)
+
+
+def _make_passport_mrz(traveler):
+    passport = str(traveler["passport_number"]).upper().replace(" ", "")
+    passport_field = passport[:9].ljust(9, "<")
+    passport_check = _mrz_check(passport_field)
+
+    nationality = str(traveler["nationality"]).upper()
+    nationality_map = {
+        "USA": "USA",
+        "INDIA": "IND",
+        "INDIAN": "IND",
+        "UK": "GBR",
+        "UNITED KINGDOM": "GBR",
+    }
+    nationality = nationality_map.get(nationality, nationality[:3].ljust(3, "<"))
+
+    dob = str(traveler["date_of_birth"]).replace("-", "")
+    dob_mrz = dob[2:8]
+    dob_check = _mrz_check(dob_mrz)
+
+    expiry = str(traveler["passport_expiry"]).replace("-", "")
+    expiry_mrz = expiry[2:8]
+    expiry_check = _mrz_check(expiry_mrz)
+
+    parts = str(traveler["name"]).upper().split()
+    surname = parts[-1] if parts else "TRAVELER"
+    given = "".join(parts[:-1]) if len(parts) > 1 else ""
+
+    line1 = (
+        "P<"
+        + nationality
+        + surname
+        + "<<"
+        + given
+    ).replace(" ", "<")
+
+    line1 = line1[:44].ljust(44, "<")
+
+    line2 = (
+        passport_field
+        + passport_check
+        + nationality
+        + dob_mrz
+        + dob_check
+        + "<"
+        + expiry_mrz
+        + expiry_check
+        + "<<<<<<<<"
+    )
+
+    line2 = line2[:44].ljust(44, "<")
+
+    return line1, line2
+
+
 def generate_original_passport(traveler, output_dir):
     """
-    Generate a passport whose fields exactly match the
-    fictional traveler profile.
+    Generate a synthetic passport with a valid MRZ.
     """
 
     path = output_dir / "original_passport.pdf"
+
+    line1, line2 = _make_passport_mrz(traveler)
 
     fields = {
         "Passport Number": traveler["passport_number"],
@@ -332,6 +415,9 @@ def generate_original_passport(traveler, output_dir):
         "All fields match the fictional traveler profile.",
         "This document represents the normal CLEAR scenario.",
         "No real government document format is being reproduced.",
+        "",
+        line1.replace("<", "&lt;"),
+        line2.replace("<", "&lt;"),
     ]
 
     return build_pdf(

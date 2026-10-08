@@ -54,6 +54,10 @@ def verify_passport(passport_details):
                 supplied_value = passport_details.get(field)
                 database_value = passport.get(field)
 
+                if field == "name":
+                    supplied_value = str(supplied_value or "").strip().casefold()
+                    database_value = str(database_value or "").strip().casefold()
+
                 if supplied_value != database_value:
                     mismatches.append(field)
 

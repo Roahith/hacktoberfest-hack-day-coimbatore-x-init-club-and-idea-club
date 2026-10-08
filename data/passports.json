@@ -1,32 +1,22 @@
 [
   {
-    "passport_number": "D10010001",
-    "name": "JOHN CARTER",
-    "date_of_birth": "1998-08-15",
+    "passport_number": "D00000001",
+    "name": "Roa",
+    "date_of_birth": "2008-02-21",
     "nationality": "USA",
     "citizenship": "USA",
-    "issue_date": "2021-08-16",
-    "expiry_date": "2031-08-15",
+    "issue_date": null,
+    "expiry_date": "2098-02-22",
     "status": "ACTIVE"
   },
   {
-    "passport_number": "D10010002",
-    "name": "EMILY JOHNSON",
-    "date_of_birth": "1995-03-22",
-    "nationality": "UK",
-    "citizenship": "UK",
-    "issue_date": "2022-03-23",
-    "expiry_date": "2032-03-22",
-    "status": "ACTIVE"
-  },
-  {
-    "passport_number": "D10010003",
-    "name": "ARJUN MENON",
-    "date_of_birth": "1999-11-10",
-    "nationality": "INDIA",
-    "citizenship": "INDIA",
-    "issue_date": "2020-11-11",
-    "expiry_date": "2030-11-10",
+    "passport_number": "D00000002",
+    "name": "Roahith",
+    "date_of_birth": "2008-02-21",
+    "nationality": "USA",
+    "citizenship": "USA",
+    "issue_date": null,
+    "expiry_date": "2036-02-22",
     "status": "ACTIVE"
   }
 ]

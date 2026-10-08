@@ -1,25 +1,17 @@
 [
   {
-    "record_id": "SEC-3001",
-    "name": "JOHN CARTER",
-    "date_of_birth": "1998-08-15",
-    "passport_number": "D10010001",
+    "record_id": "SEC-D00000001",
+    "name": "Roa",
+    "date_of_birth": "2008-02-21",
+    "passport_number": "D00000001",
     "status": "CLEAR",
     "reason": null
   },
   {
-    "record_id": "SEC-3002",
-    "name": "EMILY JOHNSON",
-    "date_of_birth": "1995-03-22",
-    "passport_number": "D10010002",
-    "status": "REVIEW",
-    "reason": "Synthetic security record requires secondary review"
-  },
-  {
-    "record_id": "SEC-3003",
-    "name": "ARJUN MENON",
-    "date_of_birth": "1999-11-10",
-    "passport_number": "D10010003",
+    "record_id": "SEC-D00000002",
+    "name": "Roahith",
+    "date_of_birth": "2008-02-21",
+    "passport_number": "D00000002",
     "status": "CLEAR",
     "reason": null
   }
